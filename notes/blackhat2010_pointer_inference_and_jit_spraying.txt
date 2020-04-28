@@ -1,0 +1,156 @@
+2010 Paper Notes
+
+================================
+Introduction
+================================
+
+Web Browser
+    - Robust parser to parse 6 versions of markup
+    - Must include high performance scripting environment; parsed pages should be rewritable
+    - Browsers take advantage of JIT / garbage collection to speed up JS
+    - Plugins!
+
+Rich Internet Applications
+    - Flash Player
+    - Java Runtime Environment
+    - Microsoft Silverlight
+
+
+Client-Side Exploits
+    - Made difficult by ASLR and DEP
+    - Want techniques to bypass these:
+        - 1. Pointer Inference
+        - 2. JIT spraying
+
+Pointer Inference
+    - Recovering memory address of internal object through "normal" interactions with SW
+
+JIT Spraying
+    - Similar to heap spraying
+    - Attacker allocates many executable pages of attacker influenced data
+
+================================
+Pointer Inference
+================================
+
+Internal Representation of Actionscript Objects
+    - Declaring variables creates an "atom"
+    - An atom is a 32-bit word
+    - The least significant 3 bits hold a tag/code describing the atom (integer, boolean, object, etc)
+    - The most significant 29 bits hold either a value (in the case of integer, for example) or a pointer (in the case of string of object, for example)
+
+Implementation of ActionScript Dictionaries
+    - Maps keys:values
+    - Flash Player's dictionary implements dictionaries with a hashtable
+
+        - Hash derived from key atom.
+        - Key and value atoms are stored together in the table.
+
+        - Hashtable size is always a power of two
+        - Quadratic Probe is used to resolve collisions
+        - Expansion of table occurs when table is at 80% capacity
+        - Entries are re-hashed when growing the table
+
+    - The object atoms are compared directly with the integer atoms
+
+    - Hash function removes some of the most significant bits of the atom, but if table is large enough, most bits will be used
+
+    - Ordering can be used to disclose memory addresses of reference atoms
+        - Order can be determined by iterating over the table!
+
+Integer Sieve
+    - 1. Insert many integers into hash table.
+    - 2. Insert object into table.
+    - 3. Iterate over entries in table.
+
+    - By looking at which integers fall before and after the inserted object, we can derive a bound on the atom of the new object, since object is hashed according to pointer value.
+
+    - To avoid issues with hash collision:
+        - Perform test twice
+            - 1. Only even integers
+            - 2. Only odd integers
+
+    - Record the integer immediately before the object itself when iterating with "for-in"
+        - The two integers (even and odd version) differ by 17
+
+        - The smaller of the two ints, when turned into an atom, is 8 smaller than the victim atom
+
+        - So, take the smaller integer and do (x + 1) << 3 to get the victim's lowest bits
+
+Other ways to extract addresses
+    - Data structure leaks
+    - Internal Ids (Python)
+    - Hash Functions
+    - Anywhere where you need a unique value per heap object and the address is one such value that could be used
+
+================================
+JIT Spray
+================================
+
+What is it?
+    - Coercing the JIT engine to write many executable pages
+    - Each page should contain shellcode
+
+    - The shellcode is entered through the middle of a normal JIT instruction
+
+Ex:
+    - var x = 0x41414141 + 0x42424242
+    - could compile to contain two 4 byte constants in the executable page:
+        - eg: mov eax, 0x41414141
+        -     mov ecx, 0x42424242
+        -     add eax, ecx
+
+    - if we started executing in the middle of the instruction stream instead of at the beginning, we could get a completely different instruction stream
+
+Process:
+    - JIT compiles the given bytecode
+    - JIT lays out the executable page on the heap
+
+    - Control should be transfered into the page at a known offset (eg: 0x6A)
+
+    - This shellcode will mark the rest of the page RWX and copy the next stage of shellcode from a String that can be modified before compilation
+
+
+    Basic Operation:
+        - Encode constants that JIT copies over to executable page
+        - Constants can encode small instructions
+        - Instruction executes, then control flows to next constant location
+
+
+Development
+    - Place breakpoint on VirtualProtect calls in Flash Player to retrieve JITed code generated from bytecode
+    - Ex: Long "xor" expression compiled down to compact set of XOR instructions
+
+        var y = (
+        0x3c54d0d9 ^
+        0x3c909058 ^
+        0x3c59f46a ^
+       ...)
+
+       turns into
+
+       mov eax, 0x3c54d0d9
+       xor eax, 0x3c909058
+       xor eax, 0x3c59f46a
+        ...
+
+
+        but if executed from offset 1 byte:
+
+        FNOP
+        PUSH ESP
+        CMP AL,35
+        POP EAX
+        ...
+
+        which is a popular way to "GetPC"
+
+
+Putting it all together
+    - Use the leaked heap address from pointer inference to determine the address of a JIT block
+        - Done through combination of spraying heap with small Objects and heap allocations
+
+    - Compute target EIP
+    - Trigger exploit
+
+    - Currently, very reliable exploit but address leak takes between 5 and 10 minutes to trigger
