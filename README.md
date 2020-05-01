@@ -8,6 +8,11 @@ CS 263 Runtime Systems Project
 
 * Reviewed community & research literature, added to README
 
+### Week of April 27
+
+* Started language specs
+* Created 2 example exploits (pseudoscope, see BADLANG-drafting.md)
+* More paper reading & discussion
 
 ## Relevant Literature
 

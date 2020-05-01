@@ -91,3 +91,28 @@ LOADI 0 0xDEADBEEF;
 # Start executing instructions at address 0xDEADBEEF
 JUMP 0;
 ```
+
+# Unsorted Notes from discussion May 1
+
+Question: where is the mmap()’d jit code relative to glibc malloc heap
+
+Exploit #1
+
+<jit spray>
+Leak current ip
+Subtract (some constant) from leak
+Jump to jit spray
+<shell>
+
+Exploit #2
+
+// dictionary is a TreeDict or something
+    T
+          I
+
+Allocate a dictionary, d
+Insert address inference target object AS A KEY (string?)
+// binary search…
+Print target addr
+
+Our jit engine library: https://github.com/asmjit/asmjit
