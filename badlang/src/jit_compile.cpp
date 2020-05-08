@@ -80,6 +80,7 @@ void jit_epilogue(asmjit::x86::Assembler &a)
 
 void jit_compiler_loop(asmjit::x86::Assembler &a, std::stringstream &program)
 {
+    // make a FIFO stack with Labels for making conditional jumps
     string line;
 
     while (std::getline(program, line))
