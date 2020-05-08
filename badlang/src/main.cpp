@@ -47,9 +47,11 @@ int main(int argc, char **argv)
         // jit compile the code!!!! 
         jit_result *p = jit_compile(localStream);
 
-        p->ptr("hello, world");
-
-        jit_release(p);
+        if (p != nullptr)
+        {
+            // p->ptr();
+            jit_release(p);
+        }
     }
 
 
