@@ -8,12 +8,17 @@ asmjit_bin_os = $(patsubst %, bin/%, $(asmjit_os))
 build: bin bin/badlang
 	
 LD_FLAGS=-lrt
+INCLUDE_FLAGS=-I$(shell pwd)/
+C_FLAGS=-g -fno-inline-small-functions -no-pie
 
-bin/badlang: src/main.cpp bin/helpers.o $(asmjit_bin_os)
-	g++ -std=c++11 -Wall -o bin/badlang $^ ${LD_FLAGS}
+bin/badlang: src/main.cpp bin/helpers.o bin/jit_compile.o $(asmjit_bin_os)
+	g++ ${C_FLAGS} -std=c++11 -Wall ${INCLUDE_FLAGS} -o bin/badlang $^ ${LD_FLAGS}
 
 bin/helpers.o: src/helpers.cpp src/helpers.hpp
-	g++ -std=c++11 -Wall -c -o $@ src/helpers.cpp
+	g++ ${C_FLAGS} -std=c++11 -Wall -c ${INCLUDE_FLAGS} -o $@ src/helpers.cpp
+
+bin/jit_compile.o: src/jit_compile.hpp src/jit_compile.cpp
+	g++ ${C_FLAGS} -std=c++11 -Wall ${INCLUDE_FLAGS} -c -o $@ src/jit_compile.cpp
 
 
 .PHONY: asmjit
