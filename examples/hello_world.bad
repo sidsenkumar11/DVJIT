@@ -1,0 +1,4 @@
+# prints hello, world
+
+LOADS 0 "hello, world";
+PRINTS 0;
