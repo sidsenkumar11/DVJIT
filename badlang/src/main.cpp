@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 
     // read the file in to a std::stringstream, which is the
     // format most convenient for jit_compile i(robert) think...
-    std::ifstream file(argv[0]);
+    std::ifstream file(argv[1]);
     if (file)
     {
         // taken from https://stackoverflow.com/a/138645
