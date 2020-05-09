@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include "helpers.hpp"
 #include "asmjit/asmjit.h"
 #include "jit_compile.hpp"
 
@@ -136,62 +137,14 @@ void jit_print_state(asmjit::x86::Assembler &a)
     Label if_null = a.newLabel();
     Label if_exit = a.newLabel();
     a.mov(rcx, x86::ptr(rbx));
-    a.test(rcx, rcx);
-    a.je(if_null);                 //   if (ptr != NULL) {
 
-    // stash the counter for the moment
     a.push(rax);
-
-    Label if_not_string;
-    // ptr is rcx, load the ptr.type
-    // into rax for a .cmp(), since we
-    // already saved rax above
-    a.mov(
-        rax,
-        x86::qword_ptr(
-            rcx,
-            offsetof(badlang_object, type)
-        )
-    );
-    a.cmp(rax, TYPE_STRING);
-    a.jne(if_not_string);
-                                   //     if (ptr.type == TYPE_STRING) {
-    jit_alloc_string_literal(a, "[%.3d]: \"%s\"");
-
-
-    a.jmp(if_exit);                //     } // end if type string
-                                   //     else { // not type string
-    jit_alloc_string_literal(a, "[%.3d]: 0x%.16x\n");
-
-
-    // retrieve the iteration counter
-    a.mov(r10, x86::ptr(rsp));
-    a.push(rax);
+    a.push(rbx);
     a.mov(rdi, rax);
-    a.mov(al, 0);
-    a.mov(rsi, r10);
-    a.mov(rdx, rcx);
-    a.call((uint64_t)(&printf));   //     printf("[%.3d]: 0x%.16x\n", i, ptr);
-    a.pop(rdi);
-    a.call((uint64_t)(&free));
+    a.mov(rsi, rcx);
+    a.call((uint64_t)(&debug_print_register));
+    a.pop(rbx);
     a.pop(rax);
-    a.jmp(if_exit);
-
-    a.bind(if_null);               //   } else { // register is null
-    
-    a.push(rax);
-    jit_alloc_string_literal(a, "[%.3d]: NULL\n");
-    a.mov(r10, x86::ptr(rsp));
-    a.push(rax);
-    a.mov(rdi, rax);
-    a.mov(al, 0);
-    a.mov(rsi, r10);
-    a.call((uint64_t)(&printf));
-    a.pop(rdi);
-    a.call((uint64_t)(&free));
-    a.pop(rax);
-
-    a.bind(if_exit);               //   }
 
     a.sub(rbx, sizeof(void *));    //   ptr++;
     a.inc(rax);                    //   i++;
