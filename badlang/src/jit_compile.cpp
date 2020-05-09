@@ -30,7 +30,7 @@ jit_result *jit_compile(std::stringstream &program)
 
     // TESTING some stuff
     // set reg0 to be an int
-    a.mov(register_ref(0), 0xDEADBEEF);
+    jit_set_register_to_string(a, 0, "hello, world");
     jit_print_state(a);
     // END TESTING
 
@@ -118,7 +118,7 @@ void jit_print_state(asmjit::x86::Assembler &a)
     a.mov(al, 0);      // al contains the number of floating-point arguments (zero)
     a.call((uint64_t)(&printf));
     a.pop(rdi);        // restore the string pointer so we can free() it
-    jit_free_string_literal(a);
+    a.call((uint64_t)(&free));
 
 
     // Iterate over each register and dump its content if not null
@@ -139,9 +139,33 @@ void jit_print_state(asmjit::x86::Assembler &a)
     a.test(rcx, rcx);
     a.je(if_null);                 //   if (ptr != NULL) {
 
-    a.push(rax); // stash the counter for the moment
+    // stash the counter for the moment
+    a.push(rax);
+
+    Label if_not_string;
+    // ptr is rcx, load the ptr.type
+    // into rax for a .cmp(), since we
+    // already saved rax above
+    a.mov(
+        rax,
+        x86::qword_ptr(
+            rcx,
+            offsetof(badlang_object, type)
+        )
+    );
+    a.cmp(rax, TYPE_STRING);
+    a.jne(if_not_string);
+                                   //     if (ptr.type == TYPE_STRING) {
+    jit_alloc_string_literal(a, "[%.3d]: \"%s\"");
+
+
+    a.jmp(if_exit);                //     } // end if type string
+                                   //     else { // not type string
     jit_alloc_string_literal(a, "[%.3d]: 0x%.16x\n");
-    a.mov(r10, x86::ptr(rsp)); // retrieve the iteration counter
+
+
+    // retrieve the iteration counter
+    a.mov(r10, x86::ptr(rsp));
     a.push(rax);
     a.mov(rdi, rax);
     a.mov(al, 0);
@@ -149,11 +173,11 @@ void jit_print_state(asmjit::x86::Assembler &a)
     a.mov(rdx, rcx);
     a.call((uint64_t)(&printf));   //     printf("[%.3d]: 0x%.16x\n", i, ptr);
     a.pop(rdi);
-    jit_free_string_literal(a);
+    a.call((uint64_t)(&free));
     a.pop(rax);
     a.jmp(if_exit);
 
-    a.bind(if_null);               //   } else {
+    a.bind(if_null);               //   } else { // register is null
     
     a.push(rax);
     jit_alloc_string_literal(a, "[%.3d]: NULL\n");
@@ -164,7 +188,7 @@ void jit_print_state(asmjit::x86::Assembler &a)
     a.mov(rsi, r10);
     a.call((uint64_t)(&printf));
     a.pop(rdi);
-    jit_free_string_literal(a);
+    a.call((uint64_t)(&free));
     a.pop(rax);
 
     a.bind(if_exit);               //   }
@@ -181,7 +205,7 @@ void jit_print_state(asmjit::x86::Assembler &a)
     a.mov(al, 0);
     a.call((uint64_t)(&printf));
     a.pop(rdi);
-    jit_free_string_literal(a);
+    a.call((uint64_t)(&free));
 
     a.pop(rsi);
     a.pop(rdi);
@@ -235,10 +259,47 @@ void jit_alloc_string_literal(asmjit::x86::Assembler &a, std::string val)
 }
 
 
-void jit_free_string_literal(asmjit::x86::Assembler &a)
+void jit_alloc_integer_literal(asmjit::x86::Assembler &a, int64_t val)
 {
-    // literally just call free(), since the pointer is expected in rdi already
-    a.call((uint64_t)(&free));
+    // call malloc
+    a.mov(rdi, sizeof(int64_t));
+    a.call((uint64_t)(&malloc));
+    // rax now contains a pointer, move our value into it
+    a.mov(x86::qword_ptr(rax), val);
+}
+
+
+void jit_set_register_to_string(
+    asmjit::x86::Assembler &a,
+    uint8_t register_id,
+    std::string val
+) {
+    jit_alloc_string_literal(a, val);    // char *s = allocate_string(val);
+    a.push(rax);
+    
+    a.mov(rdi, sizeof(badlang_object));  // badlang_object *obj = malloc(sizeof(badlang_object));
+    a.call((uint64_t)(&malloc));
+
+    a.mov(                               // badlang_object->type = TYPE_STRING;
+        x86::qword_ptr(
+            rax,
+            offsetof(badlang_object, type)),
+        TYPE_STRING
+    );
+    
+    a.pop(rbx);                          // badlang_object->ptr = s;
+    a.mov(
+        x86::qword_ptr(
+            rax,
+            offsetof(badlang_object, ptr)
+        ),
+        rbx
+    );
+
+    a.mov(                               // register[register_id] = badlang_object;
+        register_ref(register_id),
+        rax
+    );
 }
 
 

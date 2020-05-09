@@ -13,6 +13,33 @@ typedef struct {
 
 
 /**
+ * The type of object in BADLANG.
+ * 
+ * NOTE: the reason we aren't using enums is that gcc will
+ *       pack them into whatever memory footprint is most
+ *       efficient, but that's less convenient than a known-
+ *       width representation.
+ */
+typedef uint64_t object_type;
+
+#define TYPE_STRING  ((object_type) 1)
+#define TYPE_INTEGER ((object_type) 2)
+#define TYPE_DICT    ((object_type) 2)
+
+
+/**
+ * An object in BADLANG
+ */
+typedef struct {
+    object_type type;
+    /**
+     * The underlying object
+     */
+    void       *ptr;
+} badlang_object;
+
+
+/**
  * Compile a program via JIT compilation
  * 
  * returns a struct containing a code pointer and the jit runtime
@@ -53,10 +80,22 @@ void jit_print_state(asmjit::x86::Assembler &a);
  */
 void jit_alloc_string_literal(asmjit::x86::Assembler &a, std::string val);
 
+
 /**
- * Frees a string literal, expected to be stored in rdi
+ * Allocates an integer literal, leaves the resolt after alloc in rax
  */
-void jit_free_string_literal(asmjit::x86::Assembler &a);
+void jit_alloc_integer_literal(asmjit::x86::Assembler &a, int64_t val);
+
+
+/**
+ * Allocates a string literal, puts its pointer into a badlang_object, and sets
+ * the given register to a pointer to that object.
+ * 
+ * TODO:
+ * If the register is not currently NULL, deallocates the
+ * object previously in the register.
+ */
+void jit_set_register_to_string(asmjit::x86::Assembler &a, uint8_t register_id, std::string val);
 
 
 /**
