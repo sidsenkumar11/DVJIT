@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 
         if (p != nullptr)
         {
-            // p->ptr();
+            p->ptr();
             jit_release(p);
         }
     }

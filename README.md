@@ -19,6 +19,7 @@ CS 263 Runtime Systems Project
 ### Week of May 4
 
 * created src/ directory with asmjit, basic makefile
+* add some debugging features to jit emitted code for ease of use
 * add examples/
 
 
