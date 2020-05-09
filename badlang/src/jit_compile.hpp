@@ -14,7 +14,7 @@ typedef struct {
 
 /**
  * Compile a program via JIT compilation
- * 
+ *
  * returns a struct containing a code pointer and the jit runtime
  */
 jit_result *jit_compile(std::stringstream &program);
@@ -22,7 +22,7 @@ jit_result *jit_compile(std::stringstream &program);
 
 /**
  * Add the prologue for the jit runtime to the assembler
- * 
+ *
  * This makes room for all of our registers on the stack, and
  * initializes them to zero.
  */
@@ -61,7 +61,7 @@ void jit_free_string_literal(asmjit::x86::Assembler &a);
 
 /**
  * Get an Operand representing a memory reference to the given register
- */ 
+ */
 asmjit::x86::Mem register_ref(uint8_t reg_id);
 
 /**

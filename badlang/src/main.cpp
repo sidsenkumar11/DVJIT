@@ -35,16 +35,16 @@ int main(int argc, char **argv)
     {
         // taken from https://stackoverflow.com/a/138645
         file.seekg(0,std::ios::end);
-        std::streampos          length = file.tellg();
+        std::streampos length = file.tellg();
         file.seekg(0,std::ios::beg);
 
-        std::vector<char>       buffer(length);
+        std::vector<char> buffer(length);
         file.read(&buffer[0],length);
-        
-        std::stringstream       localStream;
+
+        std::stringstream localStream;
         localStream.rdbuf()->pubsetbuf(&buffer[0],length);
 
-        // jit compile the code!!!! 
+        // jit compile the code!!!!
         jit_result *p = jit_compile(localStream);
 
         if (p != nullptr)
@@ -53,7 +53,5 @@ int main(int argc, char **argv)
             jit_release(p);
         }
     }
-
-
     return 0;
 }

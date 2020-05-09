@@ -125,7 +125,7 @@ void jit_print_state(asmjit::x86::Assembler &a)
     Label loop = a.newLabel();
     Label exit = a.newLabel();
     a.mov(rax, 0);                 // let i = 0;
-    
+
     a.mov(rbx, rbp);               // let ptr = register[0];
     a.sub(rbx, sizeof(void *));
 
@@ -154,7 +154,7 @@ void jit_print_state(asmjit::x86::Assembler &a)
     a.jmp(if_exit);
 
     a.bind(if_null);               //   } else {
-    
+
     a.push(rax);
     jit_alloc_string_literal(a, "[%.3d]: NULL\n");
     a.mov(r10, x86::ptr(rsp));
