@@ -1,7 +1,10 @@
+#include <iostream>
 #include <cstring>
 #include <cstdlib>
 #include <inttypes.h>
 #include "jit_compile.hpp"
+
+using namespace std;
 
 bool is_debug()
 {
@@ -31,6 +34,41 @@ void debug_print_register(uint8_t register_id, badlang_object *obj)
     else
     {
         printf("[%.3d]: UNKNOWN TYPE\n", register_id);
+    }
+}
+
+
+void print_register(
+    badlang_object *obj,
+    object_type expected_type
+) {
+    if (obj == nullptr)
+    {
+        cerr << "REGISTER REFERENCED BEFORE ASSIGNMENT" << endl;
+        exit(1);
+    }
+
+    if (obj->type != expected_type)
+    {
+        cerr << "UNEXPECTED OBJECT TYPE IN PRINT" << endl;
+        exit(1);
+    }
+
+    if (obj->type == TYPE_INTEGER)
+    {
+        printf("%" PRId64 "\n", *(int64_t *)(obj->ptr));
+    }
+    else if (obj->type == TYPE_STRING)
+    {
+        printf("%s\n", (char *)(obj->ptr));
+    }
+    else if (obj->type == TYPE_DICT)
+    {
+        // TODO figure this out
+        printf("dict....");
+    }
+    else {
+        printf("unknown type...");
     }
 }
 
