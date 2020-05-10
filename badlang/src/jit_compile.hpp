@@ -89,14 +89,17 @@ void jit_alloc_integer_literal(asmjit::x86::Assembler &a, int64_t val);
 
 
 /**
- * Allocates a string literal, puts its pointer into a badlang_object, and sets
+ * Allocates a string, puts its pointer into a badlang_object, and sets
  * the given register to a pointer to that object.
- * 
- * TODO:
- * If the register is not currently NULL, deallocates the
- * object previously in the register.
  */
 void jit_set_register_to_string(asmjit::x86::Assembler &a, uint8_t register_id, std::string val);
+
+
+/**
+ * Allocates an integer, puts its pointer into a badlang_object, and sets
+ * the given register to a pointer to that object.
+ */
+void jit_set_register_to_int(asmjit::x86::Assembler &a, uint8_t register_id, int64_t val);
 
 
 /**

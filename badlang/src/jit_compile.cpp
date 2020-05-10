@@ -32,6 +32,7 @@ jit_result *jit_compile(std::stringstream &program)
     // TESTING some stuff
     // set reg0 to be an int
     jit_set_register_to_string(a, 0, "hello, world");
+    jit_set_register_to_int(a, 1, 1337);
     jit_print_state(a);
     // END TESTING
 
@@ -134,8 +135,6 @@ void jit_print_state(asmjit::x86::Assembler &a)
     a.cmp(rax, N_REGISTERS);       // while (i < N_REGISTERS) {
     a.jae(exit);
 
-    Label if_null = a.newLabel();
-    Label if_exit = a.newLabel();
     a.mov(rcx, x86::ptr(rbx));
 
     a.push(rax);
@@ -228,31 +227,23 @@ void jit_set_register_to_string(
     std::string val
 ) {
     jit_alloc_string_literal(a, val);    // char *s = allocate_string(val);
-    a.push(rax);
-    
-    a.mov(rdi, sizeof(badlang_object));  // badlang_object *obj = malloc(sizeof(badlang_object));
-    a.call((uint64_t)(&malloc));
+    a.mov(rdi, rbp);
+    a.sub(rdi, sizeof(void *) * (register_id + 1));
+    a.mov(rsi, rax);
+    a.call((uint64_t)(&set_register_to_string));
+}
 
-    a.mov(                               // badlang_object->type = TYPE_STRING;
-        x86::qword_ptr(
-            rax,
-            offsetof(badlang_object, type)),
-        TYPE_STRING
-    );
-    
-    a.pop(rbx);                          // badlang_object->ptr = s;
-    a.mov(
-        x86::qword_ptr(
-            rax,
-            offsetof(badlang_object, ptr)
-        ),
-        rbx
-    );
 
-    a.mov(                               // register[register_id] = badlang_object;
-        register_ref(register_id),
-        rax
-    );
+void jit_set_register_to_int(
+    asmjit::x86::Assembler &a,
+    uint8_t register_id,
+    int64_t val
+) {
+    jit_alloc_integer_literal(a, val);
+    a.mov(rdi, rbp);
+    a.sub(rdi, sizeof(void *) * (register_id + 1));
+    a.mov(rsi, rax);
+    a.call((uint64_t)(&set_register_to_int));
 }
 
 
