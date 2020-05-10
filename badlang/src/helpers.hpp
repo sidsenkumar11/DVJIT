@@ -12,6 +12,13 @@ void debug_print_register(uint8_t register_id, badlang_object *obj);
 
 
 /**
+ * Prints the register, stops execution in the case of a type
+ * mismatch from expected
+ */
+void print_register(badlang_object *obj, object_type expected_type);
+
+
+/**
  * Deallocates the memory for the given object
  * 
  * NOTE: it is safe to pass NULL to this function

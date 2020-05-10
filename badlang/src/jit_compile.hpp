@@ -103,6 +103,12 @@ void jit_set_register_to_int(asmjit::x86::Assembler &a, uint8_t register_id, int
 
 
 /**
+ * Print the given register, if it has a string
+ */
+void jit_print_register(asmjit::x86::Assembler &a, uint8_t register_id, object_type expected_type);
+
+
+/**
  * Get an Operand representing a memory reference to the given register
  */ 
 asmjit::x86::Mem register_ref(uint8_t reg_id);

@@ -32,6 +32,8 @@ jit_result *jit_compile(std::stringstream &program)
     // TESTING some stuff
     // set reg0 to be an int
     jit_set_register_to_string(a, 0, "hello, world");
+    jit_print_register(a, 0, TYPE_STRING);
+
     jit_set_register_to_int(a, 1, 1337);
     jit_print_state(a);
     // END TESTING
@@ -244,6 +246,17 @@ void jit_set_register_to_int(
     a.sub(rdi, sizeof(void *) * (register_id + 1));
     a.mov(rsi, rax);
     a.call((uint64_t)(&set_register_to_int));
+}
+
+
+void jit_print_register(
+    asmjit::x86::Assembler &a,
+    uint8_t register_id,
+    object_type expected_type
+) {
+    a.mov(rdi, register_ref(register_id));
+    a.mov(rsi, expected_type);
+    a.call((uint64_t)(&print_register));
 }
 
 
