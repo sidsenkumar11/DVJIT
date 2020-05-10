@@ -30,11 +30,11 @@ jit_result *jit_compile(std::stringstream &program)
 
     // TESTING some stuff
     // set reg0 to be an int
-    a.mov(register_ref(0), 0xDEADBEEF);
-    jit_print_state(a);
+    // a.mov(register_ref(0), 0xDEADBEEF);
+    // jit_print_state(a);
     // END TESTING
 
-    // jit_compiler_loop(a, program);
+    jit_compiler_loop(a, program);
 
     jit_epilogue(a);
 
@@ -80,8 +80,7 @@ void jit_epilogue(asmjit::x86::Assembler &a)
 {
     // standard function epilogue
     // epilogue
-    a.mov(rsp, rbp);
-    a.pop(rbp);
+    a.leave();
     a.ret();
 }
 
@@ -93,8 +92,7 @@ void jit_compiler_loop(asmjit::x86::Assembler &a, std::stringstream &program)
 
     while (std::getline(program, line))
     {
-        // THIS PRINTS GARBAGE AND IDK WHY .. ignoring for now
-        // cout << line << endl;
+        cout << line << endl;
     }
 }
 
