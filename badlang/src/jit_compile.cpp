@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include "helpers.hpp"
 #include "asmjit/asmjit.h"
 #include "jit_compile.hpp"
 
@@ -30,8 +31,9 @@ jit_result *jit_compile(std::stringstream &program)
 
     // TESTING some stuff
     // set reg0 to be an int
-    // a.mov(register_ref(0), 0xDEADBEEF);
-    // jit_print_state(a);
+    jit_set_register_to_string(a, 0, "hello, world");
+    jit_set_register_to_int(a, 1, 1337);
+    jit_print_state(a);
     // END TESTING
 
     jit_compiler_loop(a, program);
@@ -116,7 +118,7 @@ void jit_print_state(asmjit::x86::Assembler &a)
     a.mov(al, 0);      // al contains the number of floating-point arguments (zero)
     a.call((uint64_t)(&printf));
     a.pop(rdi);        // restore the string pointer so we can free() it
-    jit_free_string_literal(a);
+    a.call((uint64_t)(&free));
 
 
     // Iterate over each register and dump its content if not null
@@ -131,41 +133,15 @@ void jit_print_state(asmjit::x86::Assembler &a)
     a.cmp(rax, N_REGISTERS);       // while (i < N_REGISTERS) {
     a.jae(exit);
 
-    Label if_null = a.newLabel();
-    Label if_exit = a.newLabel();
     a.mov(rcx, x86::ptr(rbx));
-    a.test(rcx, rcx);
-    a.je(if_null);                 //   if (ptr != NULL) {
 
-    a.push(rax); // stash the counter for the moment
-    jit_alloc_string_literal(a, "[%.3d]: 0x%.16x\n");
-    a.mov(r10, x86::ptr(rsp)); // retrieve the iteration counter
     a.push(rax);
+    a.push(rbx);
     a.mov(rdi, rax);
-    a.mov(al, 0);
-    a.mov(rsi, r10);
-    a.mov(rdx, rcx);
-    a.call((uint64_t)(&printf));   //     printf("[%.3d]: 0x%.16x\n", i, ptr);
-    a.pop(rdi);
-    jit_free_string_literal(a);
+    a.mov(rsi, rcx);
+    a.call((uint64_t)(&debug_print_register));
+    a.pop(rbx);
     a.pop(rax);
-    a.jmp(if_exit);
-
-    a.bind(if_null);               //   } else {
-
-    a.push(rax);
-    jit_alloc_string_literal(a, "[%.3d]: NULL\n");
-    a.mov(r10, x86::ptr(rsp));
-    a.push(rax);
-    a.mov(rdi, rax);
-    a.mov(al, 0);
-    a.mov(rsi, r10);
-    a.call((uint64_t)(&printf));
-    a.pop(rdi);
-    jit_free_string_literal(a);
-    a.pop(rax);
-
-    a.bind(if_exit);               //   }
 
     a.sub(rbx, sizeof(void *));    //   ptr++;
     a.inc(rax);                    //   i++;
@@ -179,7 +155,7 @@ void jit_print_state(asmjit::x86::Assembler &a)
     a.mov(al, 0);
     a.call((uint64_t)(&printf));
     a.pop(rdi);
-    jit_free_string_literal(a);
+    a.call((uint64_t)(&free));
 
     a.pop(rsi);
     a.pop(rdi);
@@ -233,10 +209,39 @@ void jit_alloc_string_literal(asmjit::x86::Assembler &a, std::string val)
 }
 
 
-void jit_free_string_literal(asmjit::x86::Assembler &a)
+void jit_alloc_integer_literal(asmjit::x86::Assembler &a, int64_t val)
 {
-    // literally just call free(), since the pointer is expected in rdi already
-    a.call((uint64_t)(&free));
+    // call malloc
+    a.mov(rdi, sizeof(int64_t));
+    a.call((uint64_t)(&malloc));
+    // rax now contains a pointer, move our value into it
+    a.mov(x86::qword_ptr(rax), val);
+}
+
+
+void jit_set_register_to_string(
+    asmjit::x86::Assembler &a,
+    uint8_t register_id,
+    std::string val
+) {
+    jit_alloc_string_literal(a, val);    // char *s = allocate_string(val);
+    a.mov(rdi, rbp);
+    a.sub(rdi, sizeof(void *) * (register_id + 1));
+    a.mov(rsi, rax);
+    a.call((uint64_t)(&set_register_to_string));
+}
+
+
+void jit_set_register_to_int(
+    asmjit::x86::Assembler &a,
+    uint8_t register_id,
+    int64_t val
+) {
+    jit_alloc_integer_literal(a, val);
+    a.mov(rdi, rbp);
+    a.sub(rdi, sizeof(void *) * (register_id + 1));
+    a.mov(rsi, rax);
+    a.call((uint64_t)(&set_register_to_int));
 }
 
 
