@@ -47,6 +47,7 @@ int main(int argc, char **argv)
         // jit compile the code!!!!
         jit_result *p = jit_compile(localStream);
 
+        // execute
         if (p != nullptr)
         {
             p->ptr();

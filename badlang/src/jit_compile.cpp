@@ -16,36 +16,24 @@ using namespace asmjit::x86;
 
 jit_result *jit_compile(std::stringstream &program)
 {
-    //
     // Create a runtime and a code holder for asmjit
-    //
     asmjit::JitRuntime *jit = new asmjit::JitRuntime();
     CodeHolder code;
     code.init(jit->codeInfo());
     x86::Assembler a(&code);
 
-    //
-    // Add code to the assembler, as needed
-    //
-    jit_prologue(a);
-
     // TESTING some stuff
     // set reg0 to be an int
-    jit_set_register_to_string(a, 0, "hello, world");
-    jit_print_register(a, 0, TYPE_STRING);
+    // jit_set_register_to_string(a, 0, "hello, world");
+    // jit_print_register(a, 0, TYPE_STRING);
 
-    jit_set_register_to_int(a, 1, 1337);
-    jit_print_state(a);
+    // jit_set_register_to_int(a, 1, 1337);
+    // jit_print_state(a);
     // END TESTING
 
     jit_compiler_loop(a, program);
 
-    jit_epilogue(a);
-
-
-    //
-    // Emit the code
-    //
+    // Emit compiled code to memory
     jit_ptr fn;
     Error err = jit->add(&fn, &code);
 
@@ -82,8 +70,6 @@ void jit_prologue(asmjit::x86::Assembler &a)
 
 void jit_epilogue(asmjit::x86::Assembler &a)
 {
-    // standard function epilogue
-    // epilogue
     a.leave();
     a.ret();
 }
@@ -91,13 +77,97 @@ void jit_epilogue(asmjit::x86::Assembler &a)
 
 void jit_compiler_loop(asmjit::x86::Assembler &a, std::stringstream &program)
 {
-    // make a FIFO stack with Labels for making conditional jumps
-    string line;
+    jit_prologue(a);
 
-    while (std::getline(program, line))
+    // make a FIFO stack with Labels for making conditional jumps
+
+    string line;
+    while (getline(program, line))
     {
-        cout << line << endl;
+        // parse line
+        string token;
+        istringstream iss(line);
+        while (getline(iss, token, ' ')) {
+
+            // skip empty tokens (happens when consecutive spaces)
+            if (token.empty())
+                break;
+
+            // skip whitetoken space tokens
+            if (token.find_first_of(" \t\n\v\f\r") != string::npos)
+                break;
+
+            // skip remainder of line if comment
+            if (token.rfind("#", 0) == 0)
+                break;
+
+            // perform opcode-specific actions
+            if (token.rfind("PRINTS", 0) == 0)
+            {
+                // read register number
+                uint8_t regno;
+                iss >> regno;
+
+                // emit code
+                jit_print_register(
+                    a,
+                    regno,
+                    TYPE_STRING
+                );
+            } else if (token.rfind("TEST", 0) == 0)
+            {
+
+            } else if (token.rfind("LOADI", 0) == 0)
+            {
+
+            } else if (token.rfind("LOADS", 0) == 0)
+            {
+                // read register number
+                uint8_t regno;
+                iss >> regno;
+
+                // read string literal
+                getline(iss, token, '"');
+                getline(iss, token, '"');
+
+                // emit code
+                jit_set_register_to_string(
+                    a,
+                    regno,
+                    token
+                );
+            } else if (token.rfind("ADD", 0) == 0)
+            {
+
+            } else if (token.rfind("DIV", 0) == 0)
+            {
+
+            } else if (token.rfind("MUL", 0) == 0)
+            {
+
+            } else if (token.rfind("IFEQ", 0) == 0)
+            {
+
+            } else if (token.rfind("ELSE", 0) == 0)
+            {
+
+            } else if (token.rfind("ENDIF", 0) == 0)
+            {
+
+            } else if (token.rfind("WHILELT", 0) == 0)
+            {
+
+            } else if (token.rfind("ENDWHILE", 0) == 0)
+            {
+            }
+
+            // convert string to all caps
+            // transform(token.begin(), token.end(), token.begin(), (int(*)(int)) toupper);
+        }
     }
+
+
+    jit_epilogue(a);
 }
 
 
