@@ -1,0 +1,24 @@
+# AST Definition file for language
+#
+# Format: ParentNode => Child Child ... Child
+#
+# Single Quote after arrow means that the node should indent and linebreak its children
+# Asterisk means zero or more of that child (a std::list)
+# Question mark means optional child (may be NULL)
+# Other children may not be NULL or a std::list
+#
+# genast.py reads and processes this file
+#
+
+Program => *Statement
+
+Statement:IfElse =>' *Statement *Statement
+Statement:While =>' *Statement
+
+Statement:Loadi => Integer Integer
+Statement:Loads => Integer String
+Statement:Add => Integer Integer Integer
+Statement:Mul => Integer Integer Integer
+Statement:Div => Integer Integer Integer
+Statement:Test => Integer Integer
+Statement:Prints => Integer

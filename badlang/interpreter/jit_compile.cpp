@@ -10,167 +10,6 @@ using namespace std;
 using namespace asmjit;
 using namespace asmjit::x86;
 
-
-#define N_REGISTERS (128)
-
-
-jit_result *jit_compile(std::stringstream &program)
-{
-    // Create a runtime and a code holder for asmjit
-    asmjit::JitRuntime *jit = new asmjit::JitRuntime();
-    CodeHolder code;
-    code.init(jit->codeInfo());
-    x86::Assembler a(&code);
-
-    // TESTING some stuff
-    // set reg0 to be an int
-    // jit_set_register_to_string(a, 0, "hello, world");
-    // jit_print_register(a, 0, TYPE_STRING);
-
-    // jit_set_register_to_int(a, 1, 1337);
-    // jit_print_state(a);
-    // END TESTING
-
-    jit_compiler_loop(a, program);
-
-    // Emit compiled code to memory
-    jit_ptr fn;
-    Error err = jit->add(&fn, &code);
-
-    if (err)
-    {
-        std::cerr << "found error!!!" << endl;
-        return nullptr;
-    }
-
-    jit_result *ret = (jit_result*) malloc(sizeof(jit_result));
-    ret->ptr = fn;
-    ret->runtime = jit;
-    return ret;
-}
-
-
-void jit_prologue(asmjit::x86::Assembler &a)
-{
-    // standard function prologue
-    a.push(rbp);
-    a.mov(rbp, rsp);
-
-    // we need room for `N_REGISTERS` 8-byte registers + 2 8-byte test registers
-    a.sub(rsp, sizeof(void *) * N_REGISTERS + sizeof(void *) * 2);
-
-    // zero-out all the registers to NULL
-    a.xor_(rax, rax);
-    for (size_t i = 0; i < N_REGISTERS + 2; i++)
-    {
-        a.mov(register_ref(i), rax);
-    }
-}
-
-
-void jit_epilogue(asmjit::x86::Assembler &a)
-{
-    a.leave();
-    a.ret();
-}
-
-
-void jit_compiler_loop(asmjit::x86::Assembler &a, std::stringstream &program)
-{
-    jit_prologue(a);
-
-    // make a FIFO stack with Labels for making conditional jumps
-
-    string line;
-    while (getline(program, line))
-    {
-        // parse line
-        string token;
-        istringstream iss(line);
-        while (getline(iss, token, ' ')) {
-
-            // skip empty tokens (happens when consecutive spaces)
-            if (token.empty())
-                break;
-
-            // skip whitetoken space tokens
-            if (token.find_first_of(" \t\n\v\f\r") != string::npos)
-                break;
-
-            // skip remainder of line if comment
-            if (token.rfind("#", 0) == 0)
-                break;
-
-            // perform opcode-specific actions
-            if (token.rfind("PRINTS", 0) == 0)
-            {
-                // read register number
-                uint8_t regno;
-                iss >> regno;
-
-                // emit code
-                jit_print_register(
-                    a,
-                    regno,
-                    TYPE_STRING
-                );
-            } else if (token.rfind("TEST", 0) == 0)
-            {
-
-            } else if (token.rfind("LOADI", 0) == 0)
-            {
-
-            } else if (token.rfind("LOADS", 0) == 0)
-            {
-                // read register number
-                uint8_t regno;
-                iss >> regno;
-
-                // read string literal
-                getline(iss, token, '"');
-                getline(iss, token, '"');
-
-                // emit code
-                jit_set_register_to_string(
-                    a,
-                    regno,
-                    token
-                );
-            } else if (token.rfind("ADD", 0) == 0)
-            {
-
-            } else if (token.rfind("DIV", 0) == 0)
-            {
-
-            } else if (token.rfind("MUL", 0) == 0)
-            {
-
-            } else if (token.rfind("IFEQ", 0) == 0)
-            {
-
-            } else if (token.rfind("ELSE", 0) == 0)
-            {
-
-            } else if (token.rfind("ENDIF", 0) == 0)
-            {
-
-            } else if (token.rfind("WHILELT", 0) == 0)
-            {
-
-            } else if (token.rfind("ENDWHILE", 0) == 0)
-            {
-            }
-
-            // convert string to all caps
-            // transform(token.begin(), token.end(), token.begin(), (int(*)(int)) toupper);
-        }
-    }
-
-
-    jit_epilogue(a);
-}
-
-
 void jit_print_state(asmjit::x86::Assembler &a)
 {
     // NOTE since this is for debugging I'll save a bunch of registers
@@ -252,7 +91,7 @@ void jit_alloc_string_literal(asmjit::x86::Assembler &a, std::string val)
     a.mov(rbx, rax);
 
     // cool party trick -- greedily set 8 bytes at a time
-    for (size_t i = 0; i < val.size() - 8; i += 4)
+    for (size_t i = 0; i < val.size() / 8; i += 8)
     {
         uint64_t qword = 0;
         for (size_t j = 0; j < 8; j++)
@@ -266,7 +105,7 @@ void jit_alloc_string_literal(asmjit::x86::Assembler &a, std::string val)
     }
 
     // now, set the remaining chars individually
-    for (size_t i = std::max((size_t)0, val.size() - 8); i < val.size(); i++)
+    for (size_t i = val.size() / 8; i < val.size(); i++)
     {
         a.mov(cx, val.at(i));
         a.mov(x86::byte_ptr(rbx, i), cx);
@@ -327,7 +166,6 @@ void jit_print_register(
     a.call((uint64_t)(&print_register));
 }
 
-
 asmjit::x86::Mem register_ref(uint8_t reg_id)
 {
     if (reg_id > N_REGISTERS + 2)
@@ -335,12 +173,4 @@ asmjit::x86::Mem register_ref(uint8_t reg_id)
         throw -1;
     }
     return x86::qword_ptr(rbp, - sizeof(void *) * (reg_id + 1));
-}
-
-
-void jit_release(jit_result *jit)
-{
-    jit->runtime->release(jit->ptr);
-    delete jit->runtime;
-    free(jit);
 }

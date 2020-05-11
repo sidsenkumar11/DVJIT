@@ -1,42 +1,82 @@
-# very very lazy makefile
+.DEFAULT_GOAL := badlang
 
-asmjit_cpps = $(shell find asmjit/ -type f -name '*.cpp')
-asmjit_os = $(patsubst %.cpp, %.o, $(asmjit_cpps))
-asmjit_bin_os = $(patsubst %, bin/%, $(asmjit_os))
+# --------------------------------------------
+# Asmjit
+# --------------------------------------------
+CFLAGS_A=-DASMJIT_STATIC
+CPPS_A=$(shell find asmjit -type f -name '*.cpp')
+OBJS_A=$(patsubst %.cpp, build/%.o, $(CPPS_A))
+$(OBJS_A): | build/asmjit # create build dir first
 
-.PHONY: build
-build: bin bin/badlang
-	
-LD_FLAGS=-lrt
-INCLUDE_FLAGS=-I$(shell pwd)/
-C_FLAGS=-g -fno-inline-small-functions -no-pie
+build/asmjit:
+	mkdir -p build/asmjit
 
-bin/badlang: src/main.cpp bin/helpers.o bin/jit_compile.o $(asmjit_bin_os)
-	g++ ${C_FLAGS} -std=c++11 -Wall ${INCLUDE_FLAGS} -o bin/badlang $^ ${LD_FLAGS}
-
-bin/helpers.o: src/helpers.cpp src/helpers.hpp
-	g++ ${C_FLAGS} -std=c++11 -Wall -c ${INCLUDE_FLAGS} -o $@ src/helpers.cpp
-
-bin/jit_compile.o: src/jit_compile.hpp src/jit_compile.cpp
-	g++ ${C_FLAGS} -std=c++11 -Wall ${INCLUDE_FLAGS} -c -o $@ src/jit_compile.cpp
-
+build/asmjit/%.o: asmjit/%.cpp
+	mkdir -p `dirname $@`
+	g++ -std=c++11 ${CFLAGS_A} -c -o $@ $^
 
 .PHONY: asmjit
-asmjit: $(asmjit_bin_os)
+asmjit: $(OBJS_A)
 
+# --------------------------------------------
+# Parser
+# --------------------------------------------
+INCLUDES_P=-I$(shell pwd)/build/parser
+CFLAGS_P=-g
+OBJS_P = $(addprefix build/parser/,ast.o parser.o lexer.o)
+$(OBJS_P): | build/parser # create build dir first
 
-ASMJIT_FLAGS=-DASMJIT_STATIC
+build/parser:
+	mkdir -p build/parser
 
-asmjit/%.o: asmjit/%.cpp
-	g++ -std=c++11 ${ASMJIT_FLAGS} -c -o $@ $^
+build/parser/ast.o: parser/lang.def
+	python3 parser/genast.py -i $< -o ast
+	mv ast.cpp ast.hpp build/parser
+	g++ -std=c++11 $(CFLAGS_P) -c -o $@ build/parser/ast.cpp
 
-bin/asmjit/%.o: asmjit/%.o
-	mkdir -p `dirname $@`
-	mv $^ `dirname $@`
+build/parser/parser.o: parser/parser.y
+	bison -d -v -o build/parser/parser.cpp $<
+	g++ -std=c++11 $(CFLAGS_P) -c -o $@ build/parser/parser.cpp
+
+build/parser/lexer.o: parser/lexer.l
+	flex -o build/parser/lexer.cpp $<
+	g++ -std=c++11 $(CFLAGS_P) -c -o $@ build/parser/lexer.cpp
+
+.PHONY: parser
+parser: $(OBJS_P)
+
+# --------------------------------------------
+# Interpreter
+# --------------------------------------------
+INCLUDES_I=-I$(shell pwd)/
+CFLAGS_I=-g -fno-inline-small-functions -no-pie -Wall
+CPPS_I=$(shell find interpreter -type f -name '*.cpp')
+OBJS_I=$(patsubst %.cpp, build/%.o, $(CPPS_I))
+$(OBJS_I): | build/interpreter # create build dir first
+
+build/interpreter:
+	mkdir -p build/interpreter
+
+build/interpreter/%.o: interpreter/%.cpp $(wildcard interpreter/%.hpp)
+	g++ -std=c++11 ${CFLAGS_I} ${INCLUDES_I} ${INCLUDES_P} -c -o $@ $<
+
+.PHONY: interpreter
+interpreter: asmjit $(OBJS_I)
+
+# --------------------------------------------
+# General
+# --------------------------------------------
+LD_FLAGS=-lrt
 
 bin:
-	mkdir -p ./bin
+	mkdir -p bin
+
+bin/badlang: | bin
+bin/badlang: $(OBJS_A) $(OBJS_P) $(OBJS_I)
+	g++ ${CFLAGS_I} ${INCLUDES_I} -o $@ $^ ${LD_FLAGS}
+
+badlang: bin/badlang
 
 .PHONY: clean
 clean:
-	rm -r bin/*
+	$(RM) -r badlang build
