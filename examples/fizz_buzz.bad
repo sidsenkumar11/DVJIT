@@ -1,3 +1,13 @@
+# initialize regs
+LOADI 0 0;
+LOADI 1 0;
+LOADI 2 0;
+LOADI 3 0;
+LOADI 4 0;
+LOADI 5 0;
+LOADI 128 0;
+LOADI 129 0;
+
 LOADI 0 30; # maximum iteration
 LOADI 1 1;  # current iteration
 
@@ -30,21 +40,23 @@ WHILELT
     MUL 5 3 2;
     TEST 5 4;
     IFEQ
-        LOADS 5 "fizzbuzz";
+        LOADS 6 "fizzbuzz";
+        PRINTS 6;
     ELSE
         TEST 2 4;
         IFEQ
             # multiple of 3
-            LOADS 5 "fizz";
-        ENDIF
+            LOADS 6 "fizz";
+            PRINTS 6;
         ELSE
             TEST 3 4;
             IFEQ
                 # multiple of 5
-                LOADS 5 "buzz";
+                LOADS 6 "buzz";
+                PRINTS 6;
+            ENDIF
         ENDIF
     ENDIF
-
 
     # increment i
     LOADI 2 1;
