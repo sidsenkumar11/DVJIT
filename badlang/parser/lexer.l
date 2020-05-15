@@ -35,10 +35,19 @@
 
 "TEST"            { return T_TEST; }
 "IFEQ"            { return T_IFEQ; }
+"IFNEQ"           { return T_IFNEQ; }
 "ELSE"            { return T_ELSE; }
 "ENDIF"           { return T_ENDIF; }
 "WHILELT"         { return T_WHILELT; }
 "ENDWHILE"        { return T_ENDWHILE; }
+
+"JUMP"            { return T_JUMP; }
+"LEAKJIT"         { return T_LEAKJIT; }
+"DICTINIT"        { return T_DICTINIT; }
+"SETDICT"         { return T_SETDICT; }
+"GETDICT"         { return T_GETDICT; }
+"FORKEY"          { return T_FORKEY; }
+"ENDFORKEY"       { return T_ENDFORKEY; }
 
   /* Match ';' and ',' exactly */
 [,\;]             { return *yytext; }

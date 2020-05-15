@@ -36,12 +36,12 @@ void CodeGenerator::visitIfElseNode(IfElseNode* node)
     // test condition
     a.mov(rax, register_ref(N_REGISTERS));
     a.mov(rbx, register_ref(N_REGISTERS+1));
-    a.mov(rax, qword_ptr(rax, 8));
-    a.mov(rbx, qword_ptr(rbx, 8));
-    a.mov(rax, qword_ptr(rax));
-    a.mov(rbx, qword_ptr(rbx));
     a.cmp(rax, rbx);
-    a.jne(else_clause);
+    if (node->integer->value){
+        a.je(else_clause); // IFNEQ
+    } else {
+        a.jne(else_clause); // IFEQ
+    }
 
     // if clause
     for (list<StatementNode*>::iterator it = node->statement_list_1->begin(); it != node->statement_list_1->end(); it++) {
@@ -66,10 +66,6 @@ void CodeGenerator::visitWhileNode(WhileNode* node)
     a.bind(loop);
     a.mov(rax, register_ref(N_REGISTERS));
     a.mov(rbx, register_ref(N_REGISTERS+1));
-    a.mov(rax, qword_ptr(rax, 8));
-    a.mov(rbx, qword_ptr(rbx, 8));
-    a.mov(rax, qword_ptr(rax));
-    a.mov(rbx, qword_ptr(rbx));
     a.cmp(rax, rbx);
     a.jge(exit);
 
@@ -143,12 +139,8 @@ void CodeGenerator::visitTestNode(TestNode* node)
     a.mov(rax, qword_ptr(rax));
     a.mov(rbx, qword_ptr(rbx));
 
-    a.mov(rcx, register_ref(N_REGISTERS));
-    a.mov(rcx, qword_ptr(rcx, 8));
-    a.mov(qword_ptr(rcx), rax);
-    a.mov(rcx, register_ref(N_REGISTERS+1));
-    a.mov(rcx, qword_ptr(rcx, 8));
-    a.mov(qword_ptr(rcx), rbx);
+    a.mov(register_ref(N_REGISTERS), rax);
+    a.mov(register_ref(N_REGISTERS+1), rbx);
 }
 
 void CodeGenerator::visitPrintsNode(PrintsNode* node)
@@ -167,6 +159,48 @@ void CodeGenerator::visitIntegerNode(IntegerNode* node)
 }
 
 void CodeGenerator::visitStringNode(StringNode* node)
+{
+
+}
+
+
+void CodeGenerator::visitJumpNode(JumpNode *node)
+{
+    a.mov(rax, register_ref(node->integer->value));
+    a.mov(rax, qword_ptr(rax, 8));
+    a.mov(rax, qword_ptr(rax));
+    a.jmp(rax);
+}
+
+void CodeGenerator::visitLeakJitNode(LeakJitNode *node)
+{
+    Label pop_rax = a.newLabel();
+    a.call(pop_rax);
+    a.bind(pop_rax);
+    a.pop(rax);
+    a.add(rax, 5);
+
+    a.mov(rbx, register_ref(node->integer->value));
+    a.mov(rbx, qword_ptr(rbx, 8));
+    a.mov(qword_ptr(rbx), rax);
+}
+
+void CodeGenerator::visitDictInitNode(DictInitNode *node)
+{
+
+}
+
+void CodeGenerator::visitGetDictNode(GetDictNode *node)
+{
+
+}
+
+void CodeGenerator::visitSetDictNode(SetDictNode *node)
+{
+
+}
+
+void CodeGenerator::visitForKeyNode(ForKeyNode *node)
 {
 
 }

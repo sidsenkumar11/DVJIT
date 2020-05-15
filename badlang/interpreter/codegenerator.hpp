@@ -22,4 +22,11 @@ public:
   virtual void visitIdentifierNode(IdentifierNode* node);
   virtual void visitIntegerNode(IntegerNode* node);
   virtual void visitStringNode(StringNode* node);
+
+  virtual void visitJumpNode(JumpNode *node);
+  virtual void visitLeakJitNode(LeakJitNode *node);
+  virtual void visitDictInitNode(DictInitNode *node);
+  virtual void visitGetDictNode(GetDictNode *node);
+  virtual void visitSetDictNode(SetDictNode *node);
+  virtual void visitForKeyNode(ForKeyNode *node);
 };
