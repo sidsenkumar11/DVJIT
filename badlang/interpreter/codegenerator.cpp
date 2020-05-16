@@ -87,57 +87,34 @@ void CodeGenerator::visitLoadsNode(LoadsNode* node)
 
 void CodeGenerator::visitAddNode(AddNode* node)
 {
-    a.mov(rax, register_ref(node->integer_2->value));
-    a.mov(rbx, register_ref(node->integer_3->value));
-    a.mov(rax, qword_ptr(rax, 8));
-    a.mov(rbx, qword_ptr(rbx, 8));
-    a.mov(rax, qword_ptr(rax));
-    a.mov(rbx, qword_ptr(rbx));
+    jit_load_integer(rax, node->integer_2->value, a);
+    jit_load_integer(rbx, node->integer_3->value, a);
     a.add(rax, rbx);
-
-    a.mov(rbx, register_ref(node->integer_1->value));
-    a.mov(rbx, qword_ptr(rbx, 8));
-    a.mov(qword_ptr(rbx), rax);
+    jit_store_integer(node->integer_1->value, rax, rbx, a);
 }
 
 void CodeGenerator::visitMulNode(MulNode* node)
 {
-    a.mov(rax, register_ref(node->integer_2->value));
-    a.mov(rbx, register_ref(node->integer_3->value));
-    a.mov(rax, qword_ptr(rax, 8));
-    a.mov(rbx, qword_ptr(rbx, 8));
-    a.mov(rax, qword_ptr(rax));
-    a.mov(rbx, qword_ptr(rbx));
+    jit_load_integer(rax, node->integer_2->value, a);
+    jit_load_integer(rbx, node->integer_3->value, a);
     a.imul(rbx);
     // a.jo(tooBig) // TODO: jump if overflow occurred
-    a.mov(rbx, register_ref(node->integer_1->value));
-    a.mov(rbx, qword_ptr(rbx, 8));
-    a.mov(qword_ptr(rbx), rax);
+    jit_store_integer(node->integer_1->value, rax, rbx, a);
 }
 
 void CodeGenerator::visitDivNode(DivNode* node)
 {
-    a.mov(rax, register_ref(node->integer_2->value));
-    a.mov(rbx, register_ref(node->integer_3->value));
-    a.mov(rax, qword_ptr(rax, 8));
-    a.mov(rbx, qword_ptr(rbx, 8));
-    a.mov(rax, qword_ptr(rax));
-    a.mov(rbx, qword_ptr(rbx));
+    jit_load_integer(rax, node->integer_2->value, a);
+    jit_load_integer(rbx, node->integer_3->value, a);
     a.cqo();
     a.idiv(rdx, rax, rbx);
-    a.mov(rbx, register_ref(node->integer_1->value));
-    a.mov(rbx, qword_ptr(rbx, 8));
-    a.mov(qword_ptr(rbx), rax);
+    jit_store_integer(node->integer_1->value, rax, rbx, a);
 }
 
 void CodeGenerator::visitTestNode(TestNode* node)
 {
-    a.mov(rax, register_ref(node->integer_1->value));
-    a.mov(rbx, register_ref(node->integer_2->value));
-    a.mov(rax, qword_ptr(rax, 8));
-    a.mov(rbx, qword_ptr(rbx, 8));
-    a.mov(rax, qword_ptr(rax));
-    a.mov(rbx, qword_ptr(rbx));
+    jit_load_integer(rax, node->integer_1->value, a);
+    jit_load_integer(rbx, node->integer_2->value, a);
 
     a.mov(register_ref(N_REGISTERS), rax);
     a.mov(register_ref(N_REGISTERS+1), rbx);
@@ -166,9 +143,7 @@ void CodeGenerator::visitStringNode(StringNode* node)
 
 void CodeGenerator::visitJumpNode(JumpNode *node)
 {
-    a.mov(rax, register_ref(node->integer->value));
-    a.mov(rax, qword_ptr(rax, 8));
-    a.mov(rax, qword_ptr(rax));
+    jit_load_integer(rax, node->integer->value, a);
     a.jmp(rax);
 }
 
@@ -180,9 +155,7 @@ void CodeGenerator::visitLeakJitNode(LeakJitNode *node)
     a.pop(rax);
     a.add(rax, 5);
 
-    a.mov(rbx, register_ref(node->integer->value));
-    a.mov(rbx, qword_ptr(rbx, 8));
-    a.mov(qword_ptr(rbx), rax);
+    jit_store_integer(node->integer->value, rax, rbx, a);
 }
 
 void CodeGenerator::visitDictInitNode(DictInitNode *node)

@@ -75,3 +75,23 @@ void jit_print_register(asmjit::x86::Assembler &a, uint8_t register_id, object_t
  * Get an Operand representing a memory reference to the given register
  */
 asmjit::x86::Mem register_ref(uint8_t reg_id);
+
+/**
+ * Loads the given virtual register into the given physical register
+ */
+void jit_load_integer(
+    asmjit::x86::Gp dest,
+    uint8_t register_id,
+    asmjit::x86::Assembler &a
+);
+
+/**
+ * Stores the given physical register into the given virtual register, using
+ * the temp register for the virtual register's address
+ */
+void jit_store_integer(
+    uint8_t register_id,
+    asmjit::x86::Gp source,
+    asmjit::x86::Gp temp,
+    asmjit::x86::Assembler &a
+);

@@ -174,3 +174,26 @@ asmjit::x86::Mem register_ref(uint8_t reg_id)
     }
     return x86::qword_ptr(rbp, - sizeof(void *) * (reg_id + 1));
 }
+
+
+void jit_load_integer(
+    asmjit::x86::Gp dest,
+    uint8_t register_id,
+    asmjit::x86::Assembler &a
+) {
+    a.mov(dest, register_ref(register_id));
+    a.mov(dest, qword_ptr(dest, 8));
+    a.mov(dest, qword_ptr(dest));
+}
+
+void jit_store_integer(
+    uint8_t register_id,
+    asmjit::x86::Gp source,
+    asmjit::x86::Gp temp,
+    asmjit::x86::Assembler &a
+
+) {
+    a.mov(temp, register_ref(register_id));
+    a.mov(temp, qword_ptr(temp, 8));
+    a.mov(qword_ptr(temp), source);
+}
