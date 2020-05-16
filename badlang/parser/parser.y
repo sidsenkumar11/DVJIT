@@ -15,13 +15,13 @@
 
 %error-verbose
 
-%token T_PRINTS
+%token T_PRINT
 %token T_LOADI
 %token T_LOADS
+%token T_MOVE
 %token T_ADD
 %token T_MUL
 %token T_DIV
-%token T_TEST
 %token T_IFEQ
 %token T_IFNEQ
 %token T_ELSE
@@ -48,13 +48,13 @@
 %type <while_ptr> WhileLoop
 %type <forkey_ptr> ForKey
 
+%type <move_ptr> Move
 %type <loadi_ptr> Loadi
 %type <loads_ptr> Loads
 %type <add_ptr> Add
 %type <mul_ptr> Mul
 %type <div_ptr> Div
-%type <test_ptr> Test
-%type <prints_ptr> Prints
+%type <print_ptr> Print
 %type <jump_ptr> Jump
 %type <leakjit_ptr> LeakJit
 %type <dictinit_ptr> DictInit
@@ -82,13 +82,13 @@ Statements      : Statement Statements { $$ = $2; $$->push_front($1); }
                 | %empty               { $$ = new std::list<StatementNode*>(); }
                 ;
 
-Statement       : Prints ';'         { $$ = $1; }
+Statement       : Print ';'          { $$ = $1; }
                 | Loadi ';'          { $$ = $1; }
                 | Loads ';'          { $$ = $1; }
+                | Move ';'           { $$ = $1; }
                 | Add ';'            { $$ = $1; }
                 | Mul ';'            { $$ = $1; }
                 | Div ';'            { $$ = $1; }
-                | Test ';'           { $$ = $1; }
                 | Jump ';'           { $$ = $1; }
                 | LeakJit ';'        { $$ = $1; }
                 | DictInit ';'       { $$ = $1; }
@@ -105,6 +105,9 @@ Loadi           : T_LOADI T_INTEGER T_INTEGER { $$ = new LoadiNode($2, $3); }
 Loads           : T_LOADS T_INTEGER T_STRING { $$ = new LoadsNode($2, $3); }
                 ;
 
+Move            : T_MOVE T_INTEGER T_INTEGER { $$ = new MoveNode($2, $3); }
+                ;
+
 Add             : T_ADD T_INTEGER T_INTEGER T_INTEGER { $$ = new AddNode($2, $3, $4); }
                 ;
 
@@ -114,10 +117,7 @@ Mul             : T_MUL T_INTEGER T_INTEGER T_INTEGER { $$ = new MulNode($2, $3,
 Div             : T_DIV T_INTEGER T_INTEGER T_INTEGER { $$ = new DivNode($2, $3, $4); }
                 ;
 
-Test            : T_TEST T_INTEGER T_INTEGER { $$ = new TestNode($2, $3); }
-                ;
-
-Prints          : T_PRINTS T_INTEGER { $$ = new PrintsNode($2); }
+Print           : T_PRINT T_INTEGER { $$ = new PrintNode($2); }
                 ;
 
 Jump            : T_JUMP T_INTEGER { $$ = new JumpNode($2); }
@@ -135,13 +135,18 @@ GetDict         : T_GETDICT T_INTEGER T_INTEGER T_INTEGER { $$ = new GetDictNode
 SetDict         : T_SETDICT T_INTEGER T_INTEGER T_INTEGER { $$ = new SetDictNode($2, $3, $4); }
                 ;
 
-IfElse          : T_IFEQ Statements T_ENDIF { $$ = new IfElseNode($2, new std::list<StatementNode*>(), new IntegerNode(0)); }
-                | T_IFEQ Statements T_ELSE Statements T_ENDIF { $$ = new IfElseNode($2, $4, new IntegerNode(0)); }
-                | T_IFNEQ Statements T_ENDIF { $$ = new IfElseNode($2, new std::list<StatementNode*>(), new IntegerNode(1)); }
-                | T_IFNEQ Statements T_ELSE Statements T_ENDIF { $$ = new IfElseNode($2, $4, new IntegerNode(1)); }
+IfElse          : T_IFEQ T_INTEGER T_INTEGER Statements T_ENDIF
+    { $$ = new IfElseNode($2, $3, $4, new std::list<StatementNode*>(), new IntegerNode(0)); }
+                | T_IFEQ T_INTEGER T_INTEGER Statements T_ELSE Statements T_ENDIF
+    { $$ = new IfElseNode($2, $3, $4, $6, new IntegerNode(0)); }
+                | T_IFNEQ T_INTEGER T_INTEGER Statements T_ENDIF
+    { $$ = new IfElseNode($2, $3, $4, new std::list<StatementNode*>(), new IntegerNode(1)); }
+                | T_IFNEQ T_INTEGER T_INTEGER Statements T_ELSE Statements T_ENDIF
+    { $$ = new IfElseNode($2, $3, $4, $6, new IntegerNode(1)); }
                 ;
 
-WhileLoop       : T_WHILELT Statements T_ENDWHILE { $$ = new WhileNode($2); }
+WhileLoop       : T_WHILELT T_INTEGER T_INTEGER Statements T_ENDWHILE
+    { $$ = new WhileNode($2, $3, $4); }
                 ;
 
 ForKey          : T_FORKEY T_INTEGER T_INTEGER Statements T_ENDFORKEY { $$ = new ForKeyNode($2, $3, $4); }

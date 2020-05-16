@@ -11,14 +11,19 @@ void debug_print_register(uint8_t register_id, badlang_object *obj);
 
 
 /**
- * Prints the register, stops execution in the case of a type
- * mismatch from expected
+ * Verifies a badlang_object's type matches the expected
+ * and that the pointer has been initialized.
  */
-void print_register(badlang_object *obj, object_type expected_type);
+void verify_reg(badlang_object *obj, object_type expected);
+
+/**
+ * Prints the virtual register's contents
+ */
+void print_register(badlang_object *obj);
 
 
 /**
- * Deallocates the memory for the given object
+ * Deallocates the memory for the given badlang_object
  *
  * NOTE: it is safe to pass NULL to this function
  */
@@ -26,12 +31,18 @@ void dealloc_object(badlang_object *obj);
 
 
 /**
- * Sets the given register pointer to the given string value.
+ * Sets the given badlang_object pointer to the given string value.
  */
-void set_register_to_string(badlang_object **reg, char *val);
+void set_register_to_string(badlang_object *obj, char *val);
 
 
 /**
- * Sets the given register pointer to the given int pointer.
+ * Sets the given badlang_object pointer to the given int pointer.
  */
-void set_register_to_int(badlang_object **reg, int64_t *val);
+void set_register_to_int(badlang_object *obj, int64_t *val);
+
+/**
+ * Copies the value from source to destination.
+ * Integers are deep copied while strings and dicts are shallow copied.
+ */
+void move_register(badlang_object *dest, badlang_object *src);

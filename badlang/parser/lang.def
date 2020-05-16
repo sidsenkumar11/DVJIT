@@ -12,16 +12,16 @@
 
 Program => *Statement
 
-Statement:IfElse =>' *Statement *Statement Integer
-Statement:While =>' *Statement
+Statement:IfElse =>' Integer Integer *Statement *Statement Integer
+Statement:While =>' Integer Integer *Statement
 
+Statement:Move  => Integer Integer
 Statement:Loadi => Integer Integer
 Statement:Loads => Integer String
 Statement:Add => Integer Integer Integer
 Statement:Mul => Integer Integer Integer
 Statement:Div => Integer Integer Integer
-Statement:Test => Integer Integer
-Statement:Prints => Integer
+Statement:Print => Integer
 
 Statement:LeakJit => Integer
 Statement:Jump => Integer

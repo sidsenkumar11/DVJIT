@@ -31,6 +31,7 @@ typedef struct {
      * The underlying object
      */
     void       *ptr;
+    int64_t     regno;
 } badlang_object;
 
 /**
@@ -38,6 +39,13 @@ typedef struct {
  * for debugging purposes.
  */
 void jit_print_state(asmjit::x86::Assembler &a);
+
+
+/**
+ * Performs type checking and initialization checking on a register.
+ */
+void jit_verify_reg(uint8_t reg, asmjit::x86::Assembler &a, object_type expected);
+
 
 /**
  * Allocates a string literal, leaves result after alloc in rax
@@ -52,23 +60,40 @@ void jit_alloc_integer_literal(asmjit::x86::Assembler &a, int64_t val);
 
 
 /**
- * Allocates a string, puts its pointer into a badlang_object, and sets
- * the given register to a pointer to that object.
+ * Allocates a dict, leaves the result after alloc in rax
+ */
+void jit_alloc_dict(asmjit::x86::Assembler &a);
+
+
+/**
+ * Allocates a string and puts its pointer into the badlang_object
+ * at the given register. If the badlang_object is already occupied,
+ * the contents are first deallocated.
  */
 void jit_set_register_to_string(asmjit::x86::Assembler &a, uint8_t register_id, std::string val);
 
 
 /**
- * Allocates an integer, puts its pointer into a badlang_object, and sets
- * the given register to a pointer to that object.
+ * Allocates an integer and puts its pointer into the badlang_object
+ * at the given register. If the badlang_object is already occupied,
+ * the contents are first deallocated.
  */
 void jit_set_register_to_int(asmjit::x86::Assembler &a, uint8_t register_id, int64_t val);
 
 
 /**
- * Print the given register, if it has a string
+ * Stores the given physical register into the given virtual register.
  */
-void jit_print_register(asmjit::x86::Assembler &a, uint8_t register_id, object_type expected_type);
+void jit_set_register_to_int(
+    asmjit::x86::Assembler &a,
+    uint8_t register_id,
+    asmjit::x86::Gp source
+);
+
+/**
+ * Print the given register
+ */
+void jit_print_register(asmjit::x86::Assembler &a, uint8_t register_id);
 
 
 /**
@@ -86,12 +111,10 @@ void jit_load_integer(
 );
 
 /**
- * Stores the given physical register into the given virtual register, using
- * the temp register for the virtual register's address
+ * Copies the badlang object in register 1 to register 2
  */
-void jit_store_integer(
-    uint8_t register_id,
-    asmjit::x86::Gp source,
-    asmjit::x86::Gp temp,
-    asmjit::x86::Assembler &a
+void jit_move_register(
+    asmjit::x86::Assembler &a,
+    uint8_t reg_one,
+    uint8_t reg_two
 );

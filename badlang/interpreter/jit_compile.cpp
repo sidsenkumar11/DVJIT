@@ -76,6 +76,13 @@ void jit_print_state(asmjit::x86::Assembler &a)
     a.pop(rax);
 }
 
+void jit_verify_reg(uint8_t reg, asmjit::x86::Assembler &a, object_type expected)
+{
+    a.mov(rdi, register_ref(reg));
+    a.mov(rsi, expected);
+    a.call((uint64_t)(&verify_reg));
+}
+
 
 void jit_alloc_string_literal(asmjit::x86::Assembler &a, std::string val)
 {
@@ -122,11 +129,17 @@ void jit_alloc_string_literal(asmjit::x86::Assembler &a, std::string val)
 
 void jit_alloc_integer_literal(asmjit::x86::Assembler &a, int64_t val)
 {
-    // call malloc
     a.mov(rdi, sizeof(int64_t));
     a.call((uint64_t)(&malloc));
     // rax now contains a pointer, move our value into it
     a.mov(x86::qword_ptr(rax), val);
+}
+
+
+void jit_alloc_dict(asmjit::x86::Assembler &a)
+{
+    a.mov(rdi, sizeof(int64_t));
+    a.call((uint64_t)(&malloc));
 }
 
 
@@ -135,9 +148,11 @@ void jit_set_register_to_string(
     uint8_t register_id,
     std::string val
 ) {
-    jit_alloc_string_literal(a, val);    // char *s = allocate_string(val);
-    a.mov(rdi, rbp);
-    a.sub(rdi, sizeof(void *) * (register_id + 1));
+    // char *s = allocate_string(val);
+    jit_alloc_string_literal(a, val);
+
+    // set_register_to_string(regs[register_id], s);
+    a.mov(rdi, register_ref(register_id));
     a.mov(rsi, rax);
     a.call((uint64_t)(&set_register_to_string));
 }
@@ -148,9 +163,28 @@ void jit_set_register_to_int(
     uint8_t register_id,
     int64_t val
 ) {
+    // int64_t *num = allocate_integer(val);
     jit_alloc_integer_literal(a, val);
-    a.mov(rdi, rbp);
-    a.sub(rdi, sizeof(void *) * (register_id + 1));
+
+    // set_register_to_int(regs[register_id], num);
+    a.mov(rdi, register_ref(register_id));
+    a.mov(rsi, rax);
+    a.call((uint64_t)(&set_register_to_int));
+}
+
+
+void jit_set_register_to_int(
+    asmjit::x86::Assembler &a,
+    uint8_t register_id,
+    asmjit::x86::Gp source
+) {
+    // allocate a new integer pointer
+    a.push(source);
+    jit_alloc_integer_literal(a, 0);
+    a.pop(qword_ptr(rax));
+
+    // set the integer pointer in the badlong object
+    a.mov(rdi, register_ref(register_id));
     a.mov(rsi, rax);
     a.call((uint64_t)(&set_register_to_int));
 }
@@ -158,11 +192,9 @@ void jit_set_register_to_int(
 
 void jit_print_register(
     asmjit::x86::Assembler &a,
-    uint8_t register_id,
-    object_type expected_type
+    uint8_t register_id
 ) {
     a.mov(rdi, register_ref(register_id));
-    a.mov(rsi, expected_type);
     a.call((uint64_t)(&print_register));
 }
 
@@ -186,14 +218,9 @@ void jit_load_integer(
     a.mov(dest, qword_ptr(dest));
 }
 
-void jit_store_integer(
-    uint8_t register_id,
-    asmjit::x86::Gp source,
-    asmjit::x86::Gp temp,
-    asmjit::x86::Assembler &a
-
-) {
-    a.mov(temp, register_ref(register_id));
-    a.mov(temp, qword_ptr(temp, 8));
-    a.mov(qword_ptr(temp), source);
+void jit_move_register(asmjit::x86::Assembler &a, uint8_t reg_one, uint8_t reg_two)
+{
+    a.mov(rdi, register_ref(reg_one));
+    a.mov(rsi, register_ref(reg_two));
+    a.call((uint64_t)(&move_register));
 }

@@ -25,15 +25,15 @@
 %%
 
   /* Write your Flex token rules here */
-"PRINTS"          { return T_PRINTS; }
+"PRINT"           { return T_PRINT; }
 "LOADI"           { return T_LOADI; }
 "LOADS"           { return T_LOADS; }
+"MOVE"            { return T_MOVE; }
 
 "ADD"             { return T_ADD; }
 "MUL"             { return T_MUL; }
 "DIV"             { return T_DIV; }
 
-"TEST"            { return T_TEST; }
 "IFEQ"            { return T_IFEQ; }
 "IFNEQ"           { return T_IFNEQ; }
 "ELSE"            { return T_ELSE; }

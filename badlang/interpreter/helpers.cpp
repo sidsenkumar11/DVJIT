@@ -2,9 +2,8 @@
 #include <cstring>
 #include <cstdlib>
 #include <inttypes.h>
+#include <stdlib.h>
 #include "jit_compile.hpp"
-
-using namespace std;
 
 bool is_debug()
 {
@@ -38,23 +37,28 @@ void debug_print_register(uint8_t register_id, badlang_object *obj)
 }
 
 
-void print_register(
-    badlang_object *obj,
-    object_type expected_type
-) {
-    if (obj == nullptr)
+void verify_reg(badlang_object *obj, object_type expected)
+{
+    if (obj->type != expected)
     {
-        cerr << "REGISTER REFERENCED BEFORE ASSIGNMENT" << endl;
+        printf("type mismatch on reg %" PRId64 "!\n", obj->regno);
         exit(1);
     }
-
-    if (obj->type != expected_type)
+    else if (obj->ptr == nullptr)
     {
-        cerr << "UNEXPECTED OBJECT TYPE IN PRINT" << endl;
+        printf("uninitialized reg %" PRId64 "!\n", obj->regno);
         exit(1);
     }
+}
 
-    if (obj->type == TYPE_INTEGER)
+
+void print_register(badlang_object *obj) {
+    if (obj->ptr == nullptr)
+    {
+        printf("uninitialized reg %" PRId64 "\n", obj->regno);
+        exit(1);
+    }
+    else if (obj->type == TYPE_INTEGER)
     {
         printf("%" PRId64 "\n", *(int64_t *)(obj->ptr));
     }
@@ -65,67 +69,72 @@ void print_register(
     else if (obj->type == TYPE_DICT)
     {
         // TODO figure this out
-        printf("dict....");
+        printf("dict....\n");
     }
-    else {
-        printf("unknown type...");
+    else
+    {
+        printf("unknown type %" PRId64 " in reg %" PRId64 "\n", obj->type, obj->regno);
+        exit(1);
     }
 }
 
 
 void dealloc_object(badlang_object *obj)
 {
-    if (obj == nullptr)
-    {
+    if (obj->ptr == nullptr)
         return;
-    }
 
-    if (obj->type == TYPE_INTEGER || obj->type == TYPE_STRING)
+    if (obj->type == TYPE_DICT)
     {
-        free(obj->ptr);
+        // TODO: handle type dict
     }
 
-    // TODO: handle type dict
-
-    free(obj);
+    free(obj->ptr);
 }
 
 
-void set_register_to_string(badlang_object **reg, char *val)
+void set_register_to_string(badlang_object *obj, char *val)
 {
-    // ignore null pointers, although that should never occur
-    if (reg == nullptr)
-    {
-        return;
-    }
-
-    // if the register is already occupied, dealloc the old val
-    if (*reg == nullptr)
-    {
-        dealloc_object(*reg);
-    }
-
-    badlang_object *obj = (badlang_object *)malloc(sizeof(badlang_object));
+    dealloc_object(obj);
     obj->type = TYPE_STRING;
     obj->ptr = val;
-    *reg = obj;
 }
 
 
-void set_register_to_int(badlang_object **reg, int64_t *val)
+void set_register_to_int(badlang_object *obj, int64_t *val)
 {
-    if (reg == nullptr)
-    {
-        return;
-    }
-
-    if (*reg == nullptr)
-    {
-        dealloc_object(*reg);
-    }
-
-    badlang_object *obj = (badlang_object *)malloc(sizeof(badlang_object));
+    dealloc_object(obj);
     obj->type = TYPE_INTEGER;
     obj->ptr = val;
-    *reg = obj;
+}
+
+
+void move_register(badlang_object *dest, badlang_object *src)
+{
+    // verify src has been setup
+    if (src->ptr == nullptr)
+    {
+        printf("uninitialized reg %" PRId64 "\n", src->regno);;
+        exit(1);
+    }
+
+    // delete old value in dest
+    dealloc_object(dest);
+
+    // ints are deep copied, maps/strings are shallow copied
+    dest->type = src->type;
+    if (src->type == TYPE_INTEGER)
+    {
+        dest->ptr = malloc(sizeof(int64_t));
+        *(int64_t *)(dest->ptr) = *(int64_t *)(src->ptr);
+    }
+    else if (src->type == TYPE_STRING || src->type == TYPE_DICT)
+    {
+        dest->ptr = src->ptr;
+    }
+    else
+    {
+        printf("unknown type %" PRId64 " in reg %" PRId64 "\n", src->type, src->regno);
+        exit(1);
+    }
 }
