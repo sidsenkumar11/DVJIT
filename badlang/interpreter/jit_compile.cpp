@@ -143,7 +143,9 @@ void jit_alloc_integer_literal(asmjit::x86::Assembler &a, int64_t val)
     a.mov(rdi, sizeof(int64_t));
     a.call((uint64_t)(&malloc));
     // rax now contains a pointer, move our value into it
-    a.mov(x86::qword_ptr(rax), val);
+    // move 4 bytes at a time because we can't give 8 byte immediates
+    a.mov(x86::dword_ptr(rax, 4), (val & 0xFFFFFFFF00000000) >> 32);
+    a.mov(x86::dword_ptr(rax), val & 0xFFFFFFFF);
 }
 
 
@@ -269,4 +271,30 @@ void jit_set_dict(
     a.mov(rdx, register_ref(val_reg));
 
     a.call((uint64_t)(&set_dict));
+}
+
+
+void jit_init_forkey_iter(
+    asmjit::x86::Assembler &a,
+    uint8_t dict_reg
+) {
+    a.mov(rdi, register_ref(dict_reg));
+    a.mov(rdi, qword_ptr(rdi, 8));
+    a.call((uint64_t)(&init_iterator));
+}
+
+
+void jit_forkey_iter(
+    asmjit::x86::Assembler &a,
+    uint8_t dict_reg,
+    uint8_t dest_reg
+) {
+    // load dict pointer
+    a.mov(rdi, register_ref(dict_reg));
+    a.mov(rdi, qword_ptr(rdi, 8));
+
+    // load dest reg
+    a.mov(rsi, register_ref(dest_reg));
+
+    a.call((uint64_t)(&iterate));
 }

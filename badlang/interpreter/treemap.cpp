@@ -69,7 +69,67 @@ void TreeMap::set(uint64_t key, void *value)
 }
 
 
+void TreeMap::print_map_recursive(node_t *cur)
+{
+    if (cur == nullptr)
+        return;
+
+    print_map_recursive(cur->left);
+    badlang_object *cur_obj = (badlang_object *) (cur->value);
+    if (cur_obj->type == TYPE_INTEGER)
+    {
+        printf("%" PRId64 "\n", *((int64_t *) cur_obj->ptr));
+    }
+    else
+    {
+        printf("%s\n", (char *) cur_obj->ptr);
+    }
+    print_map_recursive(cur->right);
+}
+
+
 void TreeMap::print_map()
 {
-    printf("TODO: Print this hashtable!\n");
+    print_map_recursive(this->root);
+}
+
+
+void TreeMap::inorder_push(node_t *cur, std::stack<node_t *> *stack)
+{
+    if (cur == nullptr) return;
+
+    // reversed because I used a stack
+    inorder_push(cur->right, stack);
+    stack->push(cur);
+    inorder_push(cur->left, stack);
+}
+
+
+void TreeMap::init_iterator()
+{
+    // push new nesting iterator
+    this->iterators.push(new std::stack<node_t *>());
+
+    // build iterator stack
+    inorder_push(this->root, this->iterators.top());
+}
+
+
+void *TreeMap::iterate()
+{
+    // grab current nesting iterator
+    std::stack<node_t *> *iter = this->iterators.top();
+
+    // check if done
+    if (iter->empty())
+    {
+        this->iterators.pop();
+        delete iter;
+        return nullptr;
+    }
+
+    // visit current node
+    node_t *cur = iter->top();
+    iter->pop();
+    return cur->value;
 }

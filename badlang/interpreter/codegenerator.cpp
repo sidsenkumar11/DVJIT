@@ -220,7 +220,20 @@ void CodeGenerator::visitSetDictNode(SetDictNode *node)
 
 void CodeGenerator::visitForKeyNode(ForKeyNode *node)
 {
-    jit_verify_reg(a, node->integer_1->value, TYPE_INTEGER);
-    jit_verify_reg(a, node->integer_2->value, TYPE_DICT);
-    // jit_for_dict(a, node->integer_1->value, node->integer_2->value);
+    // init iterator
+    jit_verify_reg(a, node->integer_1->value, TYPE_DICT);
+    jit_init_forkey_iter(a, node->integer_1->value);
+
+    // iterate
+    Label loop = a.newLabel();
+    Label done = a.newLabel();
+    a.bind(loop);
+    jit_forkey_iter(a, node->integer_1->value, node->integer_2->value);
+    a.cmp(rax, 0);
+    a.jne(done);
+
+    node->visit_children(this);
+
+    a.jmp(loop);
+    a.bind(done);
 }

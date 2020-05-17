@@ -1,0 +1,11 @@
+LOADI 1 4;
+PRINT 1;
+
+LOADS 1 "hello world";
+PRINT 1;
+
+MOVE 2 1;
+PRINT 2;
+
+LOADI 1 1;
+ADD 3 1 2;

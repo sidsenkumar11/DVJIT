@@ -147,3 +147,24 @@ void jit_set_dict(
     uint8_t val_reg,
     uint8_t dict_reg
 );
+
+
+/**
+ * Initializes an iterator over the keys of the hashmap.
+ * The iterator can be nested within another iterator safely,
+ * though deleting the map register during iteration could
+ * crash the interpreter.
+ */
+void jit_init_forkey_iter(
+    asmjit::x86::Assembler &a,
+    uint8_t dict_reg
+);
+
+/**
+ * Moves the next value in the hashmap into the dest register.
+ */
+void jit_forkey_iter(
+    asmjit::x86::Assembler &a,
+    uint8_t dict_reg,
+    uint8_t dest_reg
+);

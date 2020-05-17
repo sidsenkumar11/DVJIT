@@ -222,3 +222,34 @@ void set_dict(TreeMap *map, badlang_object *key_obj, badlang_object *val_obj)
 
     map->set(key, copy);
 }
+
+
+void init_iterator(TreeMap *map)
+{
+    map->init_iterator();
+}
+
+int iterate(TreeMap *map, badlang_object *dest_obj)
+{
+    badlang_object *copy = (badlang_object *) map->iterate();
+    if (copy == nullptr)
+    {
+        return 1;
+    }
+
+    // make a deep copy of the object
+    dealloc_object(dest_obj);
+    dest_obj->type = copy->type;
+
+    if (copy->type == TYPE_INTEGER)
+    {
+        dest_obj->ptr = malloc(sizeof(int64_t));
+        memcpy(dest_obj->ptr, copy->ptr, sizeof(int64_t));
+    }
+    else
+    {
+        dest_obj->ptr = malloc(strlen((char *) copy->ptr)+1);
+        strcpy((char *) dest_obj->ptr, (char *) copy->ptr);
+    }
+    return 0;
+}

@@ -64,6 +64,18 @@ void set_dict(TreeMap *map, badlang_object *key_obj, badlang_object *val_obj);
 
 
 /**
+ * Initializes a new iterator for the map
+ */
+void init_iterator(TreeMap *map);
+
+
+/**
+ * Retrives next element in map's iterator and stores in dest_obj
+ */
+int iterate(TreeMap *map, badlang_object *dest_obj);
+
+
+/**
  * Copies the value from source to destination.
  * Integers are deep copied while strings and dicts are shallow copied.
  */

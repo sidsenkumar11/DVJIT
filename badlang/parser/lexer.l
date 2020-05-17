@@ -62,10 +62,11 @@
 
 
 0|([1-9][0-9]*)   {
-                    long int value = strtol(yytext, NULL, 0);
-                    if (errno != 0 || value > INT_MAX || value < INT_MIN)
-                      yyerror("integer out of range");
-                    yylval.integer_ptr = new IntegerNode((int) value);
+                    long long value = strtoll(yytext, NULL, 0);
+                    if (errno != 0 || value > LONG_MAX || value < LONG_MIN)
+                      yyerror("Integer out of range");
+
+                    yylval.integer_ptr = new IntegerNode(value);
                     return T_INTEGER;
                   }
 
