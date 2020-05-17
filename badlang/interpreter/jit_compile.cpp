@@ -76,7 +76,18 @@ void jit_print_state(asmjit::x86::Assembler &a)
     a.pop(rax);
 }
 
-void jit_verify_reg(uint8_t reg, asmjit::x86::Assembler &a, object_type expected)
+
+asmjit::x86::Mem register_ref(uint8_t reg_id)
+{
+    if (reg_id > N_REGISTERS + 2)
+    {
+        throw -1;
+    }
+    return x86::qword_ptr(rbp, - sizeof(void *) * (reg_id + 1));
+}
+
+
+void jit_verify_reg(asmjit::x86::Assembler &a, uint8_t reg, object_type expected)
 {
     a.mov(rdi, register_ref(reg));
     a.mov(rsi, expected);
@@ -136,13 +147,6 @@ void jit_alloc_integer_literal(asmjit::x86::Assembler &a, int64_t val)
 }
 
 
-void jit_alloc_dict(asmjit::x86::Assembler &a)
-{
-    a.mov(rdi, sizeof(int64_t));
-    a.call((uint64_t)(&malloc));
-}
-
-
 void jit_set_register_to_string(
     asmjit::x86::Assembler &a,
     uint8_t register_id,
@@ -190,6 +194,15 @@ void jit_set_register_to_int(
 }
 
 
+void jit_set_register_to_dict(
+    asmjit::x86::Assembler &a,
+    uint8_t register_id
+) {
+    a.mov(rdi, register_ref(register_id));
+    a.call((uint64_t)(&set_register_to_dict));
+}
+
+
 void jit_print_register(
     asmjit::x86::Assembler &a,
     uint8_t register_id
@@ -198,29 +211,62 @@ void jit_print_register(
     a.call((uint64_t)(&print_register));
 }
 
-asmjit::x86::Mem register_ref(uint8_t reg_id)
-{
-    if (reg_id > N_REGISTERS + 2)
-    {
-        throw -1;
-    }
-    return x86::qword_ptr(rbp, - sizeof(void *) * (reg_id + 1));
-}
-
 
 void jit_load_integer(
+    asmjit::x86::Assembler &a,
     asmjit::x86::Gp dest,
-    uint8_t register_id,
-    asmjit::x86::Assembler &a
+    uint8_t register_id
 ) {
     a.mov(dest, register_ref(register_id));
     a.mov(dest, qword_ptr(dest, 8));
     a.mov(dest, qword_ptr(dest));
 }
 
-void jit_move_register(asmjit::x86::Assembler &a, uint8_t reg_one, uint8_t reg_two)
+
+void jit_move_register(asmjit::x86::Assembler &a, uint8_t dest, uint8_t src)
 {
-    a.mov(rdi, register_ref(reg_one));
-    a.mov(rsi, register_ref(reg_two));
+    a.mov(rdi, register_ref(dest));
+    a.mov(rsi, register_ref(src));
     a.call((uint64_t)(&move_register));
+}
+
+
+void jit_get_dict(
+    asmjit::x86::Assembler &a,
+    uint8_t dest_reg,
+    uint8_t key_reg,
+    uint8_t dict_reg
+) {
+    // load dict class pointer
+    a.mov(rdi, register_ref(dict_reg));
+    a.mov(rdi, qword_ptr(rdi, 8));
+
+    // load key object
+    a.mov(rsi, register_ref(key_reg));
+
+    // load dest object
+    a.mov(rdx, register_ref(dest_reg));
+
+    // copy dict value into dest register
+    a.call((uint64_t)(&get_dict));
+}
+
+
+void jit_set_dict(
+    asmjit::x86::Assembler &a,
+    uint8_t key_reg,
+    uint8_t val_reg,
+    uint8_t dict_reg
+) {
+    // load dict class pointer
+    a.mov(rdi, register_ref(dict_reg));
+    a.mov(rdi, qword_ptr(rdi, 8));
+
+    // load key object
+    a.mov(rsi, register_ref(key_reg));
+
+    // load value object
+    a.mov(rdx, register_ref(val_reg));
+
+    a.call((uint64_t)(&set_dict));
 }

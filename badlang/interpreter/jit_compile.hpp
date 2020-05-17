@@ -17,9 +17,11 @@ typedef int (*jit_ptr)();
  */
 typedef uint64_t object_type;
 
-#define TYPE_STRING  ((object_type) 1)
-#define TYPE_INTEGER ((object_type) 2)
-#define TYPE_DICT    ((object_type) 2)
+#define TYPE_STRING   ((object_type) 1)
+#define TYPE_INTEGER  ((object_type) 2)
+#define TYPE_DICT     ((object_type) 3)
+#define TYPE_HASHABLE ((object_type) 4)
+#define TYPE_ANY      ((object_type) 5)
 
 
 /**
@@ -44,7 +46,7 @@ void jit_print_state(asmjit::x86::Assembler &a);
 /**
  * Performs type checking and initialization checking on a register.
  */
-void jit_verify_reg(uint8_t reg, asmjit::x86::Assembler &a, object_type expected);
+void jit_verify_reg(asmjit::x86::Assembler &a, uint8_t reg, object_type expected);
 
 
 /**
@@ -57,12 +59,6 @@ void jit_alloc_string_literal(asmjit::x86::Assembler &a, std::string val);
  * Allocates an integer literal, leaves the result after alloc in rax
  */
 void jit_alloc_integer_literal(asmjit::x86::Assembler &a, int64_t val);
-
-
-/**
- * Allocates a dict, leaves the result after alloc in rax
- */
-void jit_alloc_dict(asmjit::x86::Assembler &a);
 
 
 /**
@@ -90,6 +86,15 @@ void jit_set_register_to_int(
     asmjit::x86::Gp source
 );
 
+
+/**
+ * Allocates a dict and puts its pointer into the badlang_object
+ * at the given register. If the badlang_object is already occupied,
+ * the contents are first deallocated.
+ */
+void jit_set_register_to_dict(asmjit::x86::Assembler &a, uint8_t register_id);
+
+
 /**
  * Print the given register
  */
@@ -101,20 +106,44 @@ void jit_print_register(asmjit::x86::Assembler &a, uint8_t register_id);
  */
 asmjit::x86::Mem register_ref(uint8_t reg_id);
 
+
 /**
  * Loads the given virtual register into the given physical register
  */
 void jit_load_integer(
+    asmjit::x86::Assembler &a,
     asmjit::x86::Gp dest,
-    uint8_t register_id,
-    asmjit::x86::Assembler &a
+    uint8_t register_id
 );
 
+
 /**
- * Copies the badlang object in register 1 to register 2
+ * Copies the badlang object in src to dest
  */
 void jit_move_register(
     asmjit::x86::Assembler &a,
-    uint8_t reg_one,
-    uint8_t reg_two
+    uint8_t dest,
+    uint8_t src
+);
+
+
+/**
+ * Retrieves the requested key from the dict
+ * and stores the value in dest_reg
+ */
+void jit_get_dict(
+    asmjit::x86::Assembler &a,
+    uint8_t dest_reg,
+    uint8_t key_reg,
+    uint8_t dict_reg
+);
+
+/**
+ * Stores the <key, value> pair into the dict
+ */
+void jit_set_dict(
+    asmjit::x86::Assembler &a,
+    uint8_t key_reg,
+    uint8_t val_reg,
+    uint8_t dict_reg
 );

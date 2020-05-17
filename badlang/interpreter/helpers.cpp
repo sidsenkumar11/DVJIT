@@ -4,6 +4,7 @@
 #include <inttypes.h>
 #include <stdlib.h>
 #include "jit_compile.hpp"
+#include "treemap.hpp"
 
 bool is_debug()
 {
@@ -39,15 +40,27 @@ void debug_print_register(uint8_t register_id, badlang_object *obj)
 
 void verify_reg(badlang_object *obj, object_type expected)
 {
-    if (obj->type != expected)
-    {
-        printf("type mismatch on reg %" PRId64 "!\n", obj->regno);
-        exit(1);
-    }
-    else if (obj->ptr == nullptr)
+    // check initialized
+    if (obj->ptr == nullptr)
     {
         printf("uninitialized reg %" PRId64 "!\n", obj->regno);
         exit(1);
+    }
+
+    // check types
+    if (expected != TYPE_ANY)
+    {
+        if (expected != TYPE_HASHABLE && obj->type != expected)
+        {
+            printf("type mismatch on reg %" PRId64 "!\n", obj->regno);
+            exit(1);
+        }
+        else if (expected == TYPE_HASHABLE && obj->type == TYPE_DICT)
+        {
+            printf("type error on reg %" PRId64 "!\n", obj->regno);
+            printf("cannot insert dicts into dicts\n");
+            exit(1);
+        }
     }
 }
 
@@ -68,8 +81,8 @@ void print_register(badlang_object *obj) {
     }
     else if (obj->type == TYPE_DICT)
     {
-        // TODO figure this out
-        printf("dict....\n");
+        TreeMap *map = (TreeMap *) (obj->ptr);
+        map->print_map();
     }
     else
     {
@@ -86,7 +99,8 @@ void dealloc_object(badlang_object *obj)
 
     if (obj->type == TYPE_DICT)
     {
-        // TODO: handle type dict
+        TreeMap *map = (TreeMap *) (obj->ptr);
+        map->~TreeMap();
     }
 
     free(obj->ptr);
@@ -106,6 +120,14 @@ void set_register_to_int(badlang_object *obj, int64_t *val)
     dealloc_object(obj);
     obj->type = TYPE_INTEGER;
     obj->ptr = val;
+}
+
+
+void set_register_to_dict(badlang_object *obj)
+{
+    dealloc_object(obj);
+    obj->type = TYPE_DICT;
+    obj->ptr = new TreeMap();
 }
 
 
@@ -137,4 +159,66 @@ void move_register(badlang_object *dest, badlang_object *src)
         printf("unknown type %" PRId64 " in reg %" PRId64 "\n", src->type, src->regno);
         exit(1);
     }
+}
+
+
+void get_dict(TreeMap *map, badlang_object *key_obj, badlang_object *dest_obj)
+{
+    uint64_t key;
+    if (key_obj->type == TYPE_INTEGER)
+    {
+        key = *((int64_t *) (key_obj->ptr));
+    }
+    else
+    {
+        key = (uint64_t) key_obj->ptr;
+    }
+
+    badlang_object *copy = (badlang_object *) map->get(key);
+
+    // make a deep copy of object
+    dealloc_object(dest_obj);
+    dest_obj->type = copy->type;
+
+    if (copy->type == TYPE_INTEGER)
+    {
+        dest_obj->ptr = malloc(sizeof(int64_t));
+        memcpy(dest_obj->ptr, copy->ptr, sizeof(int64_t));
+    }
+    else
+    {
+        dest_obj->ptr = malloc(strlen((char *) copy->ptr)+1);
+        strcpy((char *) dest_obj->ptr, (char *) copy->ptr);
+    }
+}
+
+
+void set_dict(TreeMap *map, badlang_object *key_obj, badlang_object *val_obj)
+{
+    uint64_t key;
+    if (key_obj->type == TYPE_INTEGER)
+    {
+        key = *((int64_t *) (key_obj->ptr));
+    }
+    else
+    {
+        key = (uint64_t) key_obj->ptr;
+    }
+
+    // make a deep copy of the value
+    badlang_object *copy = (badlang_object *) malloc(sizeof(badlang_object));
+    copy->type = val_obj->type;
+
+    if (val_obj->type == TYPE_INTEGER)
+    {
+        copy->ptr = malloc(sizeof(int64_t));
+        memcpy(copy->ptr, val_obj->ptr, sizeof(int64_t));
+    }
+    else
+    {
+        copy->ptr = malloc(strlen((char *) val_obj->ptr)+1);
+        strcpy((char *) copy->ptr, (char *) val_obj->ptr);
+    }
+
+    map->set(key, copy);
 }
