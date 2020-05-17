@@ -22,6 +22,16 @@ CS 263 Runtime Systems Project
 * add some debugging features to jit emitted code for ease of use
 * add examples/
 
+### Week of May 11
+* refactored code and rewrote Makefile
+* created scanner and parser infrastructure for badlang
+* working "fizzbuzz" example
+
+### Week of May 18
+* inserted "Dictionary" type into badlang, supporting "get", "set", and iteration through "forkey"
+* inserted "LeakJit" and "Jump" instructions
+* wrote several test programs, including one that leaks a pointer
+* made several quality-of-life improvements to the interpreter (ie the interpreter prints useful error messages instead of segfaulting)
 
 ## Relevant Literature
 
