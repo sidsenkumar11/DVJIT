@@ -1,4 +1,7 @@
 # DVJIT
+
+[![Build Status](https://travis-ci.com/sidsenkumar11/DVJIT.svg?branch=master)](https://travis-ci.com/sidsenkumar11/DVJIT)
+
 CS 263 Runtime Systems Project
 
 
