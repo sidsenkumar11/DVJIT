@@ -101,10 +101,12 @@ void dealloc_object(badlang_object *obj)
     if (obj->type == TYPE_DICT)
     {
         TreeMap *map = (TreeMap *) (obj->ptr);
-        map->~TreeMap();
+        delete map;
     }
-
-    free(obj->ptr);
+    else
+    {
+        free(obj->ptr);
+    }
 }
 
 
@@ -175,7 +177,7 @@ void get_dict(TreeMap *map, badlang_object *key_obj, badlang_object *dest_obj)
         key = (uint64_t) key_obj->ptr;
     }
 
-    badlang_object *copy = (badlang_object *) map->get(key);
+    badlang_object *copy = map->get(key);
 
     // make a deep copy of object
     dealloc_object(dest_obj);
@@ -232,7 +234,7 @@ void init_iterator(TreeMap *map)
 
 int iterate(TreeMap *map, badlang_object *dest_obj)
 {
-    badlang_object *copy = (badlang_object *) map->iterate();
+    badlang_object *copy = map->iterate();
     if (copy == nullptr)
     {
         return 1;

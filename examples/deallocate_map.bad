@@ -1,0 +1,24 @@
+# Make a dict
+DICTINIT 100;
+LOADI 1 1;
+LOADI 2 2;
+
+SETDICT 1 1 100;
+SETDICT 2 2 100;
+
+# Overwrite dict, deallocating members safely
+LOADI 100 1;
+
+# Make a dict
+DICTINIT 100;
+
+LOADI 1 1;
+LOADI 2 2;
+
+SETDICT 1 1 100;
+SETDICT 2 2 100;
+
+# Overwrite dict unsafely, throwing an error
+FORKEY 100 1
+    LOADI 100 1;
+ENDFORKEY
