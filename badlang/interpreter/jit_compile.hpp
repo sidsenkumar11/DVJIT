@@ -168,3 +168,12 @@ void jit_forkey_iter(
     uint8_t dict_reg,
     uint8_t dest_reg
 );
+
+/**
+ * Compares the two given registers' values.
+ */
+void jit_compare_regs(
+    asmjit::x86::Assembler &a,
+    uint8_t reg_one,
+    uint8_t reg_two
+);

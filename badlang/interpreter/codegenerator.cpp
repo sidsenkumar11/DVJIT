@@ -62,14 +62,13 @@ void CodeGenerator::visitIfElseNode(IfElseNode* node)
     Label else_clause = a.newLabel();
     Label endif = a.newLabel();
 
-    // verify and load test regs
-    jit_verify_reg(a, node->integer_1->value, TYPE_INTEGER);
-    jit_verify_reg(a, node->integer_2->value, TYPE_INTEGER);
-    jit_load_integer(a, rax, node->integer_1->value);
-    jit_load_integer(a, rbx, node->integer_2->value);
+    // verify test regs are initialized
+    jit_verify_reg(a, node->integer_1->value, TYPE_HASHABLE);
+    jit_verify_reg(a, node->integer_2->value, TYPE_HASHABLE);
 
-    // test condition
-    a.cmp(rax, rbx);
+    // integers and strings are compared by value
+    jit_compare_regs(a, node->integer_1->value, node->integer_2->value);
+    a.cmp(rax, 0);
     if (node->integer_3->value){
         a.je(else_clause); // IFNEQ
     } else {

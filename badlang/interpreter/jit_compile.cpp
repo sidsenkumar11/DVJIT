@@ -300,3 +300,13 @@ void jit_forkey_iter(
 
     a.call((uint64_t)(&iterate));
 }
+
+void jit_compare_regs(
+    asmjit::x86::Assembler &a,
+    uint8_t reg_one,
+    uint8_t reg_two
+) {
+    a.mov(rdi, register_ref(reg_one));
+    a.mov(rsi, register_ref(reg_two));
+    a.call((uint64_t) (&compare_regs));
+}

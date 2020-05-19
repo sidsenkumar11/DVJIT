@@ -91,3 +91,11 @@ void move_register(badlang_object *dest, badlang_object *src);
  *   "a\ta"   => "a<tab>a"
  */
 std::string unescape_string(std::string src);
+
+
+/**
+ * Compares two badlang objects and returns 0 if they're equal, 1 otherwise.
+ * Strings and integers are deeply compared. Different type objects
+ * are always not equal.
+ */
+int compare_regs(badlang_object *first, badlang_object *second);

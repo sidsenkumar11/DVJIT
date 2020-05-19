@@ -322,3 +322,24 @@ std::string unescape_string(std::string src)
     }
     return dest;
 }
+
+int compare_regs(badlang_object *first, badlang_object *second)
+{
+    if (first->type != second->type)
+    {
+        return 1;
+    }
+
+    if (first->type == TYPE_INTEGER)
+    {
+        return *(int64_t *) (first->ptr) != *(int64_t *) (second->ptr);
+    }
+
+    if (first->type == TYPE_STRING)
+    {
+        return strcmp((char *) (first->ptr), (char *) second->ptr) != 0;
+    }
+
+    // should never reach here
+    return 1;
+}
