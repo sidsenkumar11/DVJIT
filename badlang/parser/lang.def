@@ -25,6 +25,7 @@ Statement:Print => Integer
 
 Statement:LeakJit => Integer
 Statement:Jump => Integer
+Statement:JumpAbs => Integer
 
 Statement:DictInit => Integer
 Statement:SetDict => Integer Integer Integer

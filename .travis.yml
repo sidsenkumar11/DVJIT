@@ -1,0 +1,22 @@
+sudo: required
+dist: bionic
+cache: pip
+
+branches:
+    only:
+    - /.*/
+
+install:
+    - sudo apt-get -y install flex bison make g++
+    - sudo apt-get -y install python3-pip python3-setuptools
+    - sudo -H python3 -m pip install pwntools
+
+notifications:
+    email:
+        on_failure: never
+
+language: cpp
+script:
+    - cd badlang
+    - make clean
+    - make tests

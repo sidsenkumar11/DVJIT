@@ -32,6 +32,7 @@
 %token T_STRING
 
 %token T_JUMP
+%token T_JUMPABS
 %token T_LEAKJIT
 %token T_DICTINIT
 %token T_SETDICT
@@ -56,6 +57,7 @@
 %type <div_ptr> Div
 %type <print_ptr> Print
 %type <jump_ptr> Jump
+%type <jumpabs_ptr> JumpAbs
 %type <leakjit_ptr> LeakJit
 %type <dictinit_ptr> DictInit
 %type <setdict_ptr> SetDict
@@ -90,6 +92,7 @@ Statement       : Print ';'          { $$ = $1; }
                 | Mul ';'            { $$ = $1; }
                 | Div ';'            { $$ = $1; }
                 | Jump ';'           { $$ = $1; }
+                | JumpAbs ';'        { $$ = $1; }
                 | LeakJit ';'        { $$ = $1; }
                 | DictInit ';'       { $$ = $1; }
                 | GetDict ';'        { $$ = $1; }
@@ -121,6 +124,9 @@ Print           : T_PRINT T_INTEGER { $$ = new PrintNode($2); }
                 ;
 
 Jump            : T_JUMP T_INTEGER { $$ = new JumpNode($2); }
+                ;
+
+JumpAbs         : T_JUMPABS T_INTEGER { $$ = new JumpAbsNode($2); }
                 ;
 
 LeakJit         : T_LEAKJIT T_INTEGER { $$ = new LeakJitNode($2); }

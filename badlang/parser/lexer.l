@@ -42,6 +42,7 @@
 "ENDWHILE"        { return T_ENDWHILE; }
 
 "JUMP"            { return T_JUMP; }
+"JUMPABS"         { return T_JUMPABS; }
 "LEAKJIT"         { return T_LEAKJIT; }
 "DICTINIT"        { return T_DICTINIT; }
 "SETDICT"         { return T_SETDICT; }

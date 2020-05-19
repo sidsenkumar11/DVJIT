@@ -24,6 +24,7 @@ public:
   virtual void visitStringNode(StringNode* node);
 
   virtual void visitJumpNode(JumpNode *node);
+  virtual void visitJumpAbsNode(JumpAbsNode *node);
   virtual void visitLeakJitNode(LeakJitNode *node);
   virtual void visitDictInitNode(DictInitNode *node);
   virtual void visitGetDictNode(GetDictNode *node);
