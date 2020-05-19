@@ -89,14 +89,14 @@ badlang: bin/badlang
 TEST_DIR=../tests
 
 # for local testing
-test:
+test: badlang
 	@for f in $(shell ls ${TEST_DIR}); do \
 		(../tests/$${f} 1>/dev/null && \
 		/bin/echo -e ${GREEN}PASS${NC} $${f} ) || /bin/echo -e ${RED}FAIL${NC} $${f}; \
 	done
 
 # for travis, have the makefile return "error" if test fails
-tests:
+tests: badlang
 	@for f in $(shell ls ${TEST_DIR}); do \
 		../tests/$${f} 1>/dev/null || exit 1; \
 	done
