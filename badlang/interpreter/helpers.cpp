@@ -1,7 +1,8 @@
-#include <iostream>
-#include <cstring>
 #include <cstdlib>
+#include <cstring>
+#include <ctype.h>
 #include <inttypes.h>
+#include <iostream>
 #include <stdlib.h>
 #include "jit_compile.hpp"
 #include "treemap.hpp"
@@ -252,4 +253,72 @@ int iterate(TreeMap *map, badlang_object *dest_obj)
         strcpy((char *) dest_obj->ptr, (char *) copy->ptr);
     }
     return 0;
+}
+
+
+std::string unescape_string(std::string src)
+{
+    std::string dest;
+    // i indexes into the string src
+    for (size_t i=0; i < src.size(); i++)
+    {
+        char tocopy = src.at(i);
+        if (tocopy == '\\' && src.size() > i + 1)
+        {
+            // this is an escape code
+            // we need to eat a few more chars, so advance as-we-go
+            switch (src.at(i + 1))
+            {
+            case 'n':
+            {
+                i++;
+                tocopy = '\n';
+                break;
+            }
+            case 't':
+            {
+                i++;
+                tocopy = '\t';
+                break;
+            }
+            case '"':
+            {
+                i++;
+                tocopy = '"';
+                break;
+            }
+            case 'x':
+            {
+                // ensure we have 2 more to eat
+                if (src.size() <= i + 3)
+                {
+                    throw "not enough chars to read escape sequence";
+                }
+
+                // ensure the chars are hex
+                char c1 = tolower(src.at(i+2));
+                char c2 = tolower(src.at(i+3));
+                if (! (((('a' <= c1)  && (c1 <= 'f'))) || isdigit(c1)) &&
+                      ((((('a' <= c2)  && (c2 <= 'f'))) || isdigit(c2))) )
+                {
+                    throw "non-hex escape sequence";
+                }
+
+                tocopy = (char) std::stol(src.substr(i+2, 2), NULL, 16);
+
+                if (tocopy == '\0')
+                {
+                    throw "cannot use null character in string";
+                }
+                i += 3;
+                break;
+            }
+            default:
+                throw "unknown character escape code";
+            }
+        } // end if (is escape)
+
+        dest.append(1, tocopy);
+    }
+    return dest;
 }

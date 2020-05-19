@@ -109,21 +109,23 @@ void jit_alloc_string_literal(asmjit::x86::Assembler &a, std::string val)
     a.mov(rbx, rax);
 
     // cool party trick -- greedily set 8 bytes at a time
-    for (size_t i = 0; i < val.size() / 8; i += 8)
+    size_t end_macro_copy = val.size() >> 3 << 3;
+    for (size_t i = 0; i < end_macro_copy; i += 8)
     {
         uint64_t qword = 0;
         for (size_t j = 0; j < 8; j++)
         {
-            uint64_t to_set = val.at(i + j);
+            uint64_t to_set = (uint8_t) val.at(i + j);
             to_set <<= (8 * j);
             qword |= to_set;
         }
+
         a.mov(rcx, qword);
         a.mov(x86::qword_ptr(rbx, i), rcx);
     }
 
     // now, set the remaining chars individually
-    for (size_t i = val.size() / 8; i < val.size(); i++)
+    for (size_t i = end_macro_copy; i < val.size(); i++)
     {
         a.mov(cx, val.at(i));
         a.mov(x86::byte_ptr(rbx, i), cx);
@@ -154,10 +156,10 @@ void jit_set_register_to_string(
     uint8_t register_id,
     std::string val
 ) {
-    // char *s = allocate_string(val);
-    jit_alloc_string_literal(a, val);
+    // unescape the string
+    std::string unescaped_str = unescape_string(val);
+    jit_alloc_string_literal(a, unescaped_str);
 
-    // set_register_to_string(regs[register_id], s);
     a.mov(rdi, register_ref(register_id));
     a.mov(rsi, rax);
     a.call((uint64_t)(&set_register_to_string));

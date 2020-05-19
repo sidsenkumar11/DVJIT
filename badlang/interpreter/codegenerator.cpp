@@ -184,6 +184,11 @@ void CodeGenerator::visitJumpNode(JumpNode *node)
 {
     jit_verify_reg(a, node->integer->value, TYPE_INTEGER);
     jit_load_integer(a, rax, node->integer->value);
+
+    // HACK - get the instruction pointer in rbx
+    a.lea(rbx, x86::Mem(rip, 0));
+    a.add(rax, rbx);
+
     a.jmp(rax);
 }
 
