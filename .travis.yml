@@ -9,6 +9,7 @@ branches:
 install:
     - sudo apt-get -y install flex bison make g++
     - sudo apt-get -y install python3-pip python3-setuptools
+    - sudo -H python3 -m pip install wheel
     - sudo -H python3 -m pip install pwntools
 
 notifications:
