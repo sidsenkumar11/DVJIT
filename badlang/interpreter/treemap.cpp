@@ -6,11 +6,34 @@
 
 TreeMap::~TreeMap()
 {
-    printf("TODO: Proper deallocation of a tree!\n");
+    // Make sure not iterating this dict
+    if (!this->iterators.empty())
+    {
+        printf("Runtime detected attempt to overwrite register containing ");
+        printf("a dictionary while executing!\n");
+        exit(1);
+    }
+
+    // Clear out nodes
+    recursive_deallocate(this->root);
+}
+
+void TreeMap::recursive_deallocate(node_t *node)
+{
+    if (node == NULL)
+        return;
+
+    recursive_deallocate(node->left);
+    recursive_deallocate(node->right);
+
+    badlang_object *obj = node->value;
+    free(obj->ptr);
+    free(obj);
+    free(node);
 }
 
 
-node_t *TreeMap::newNode(uint64_t key, void *value)
+node_t *TreeMap::newNode(uint64_t key, badlang_object *value)
 {
     node_t *temp = (node_t *) malloc(sizeof(node_t));
     temp->key   = key;
@@ -35,7 +58,7 @@ node_t *TreeMap::getRecursive(node_t *node, uint64_t key)
 }
 
 
-void *TreeMap::get(uint64_t key)
+badlang_object *TreeMap::get(uint64_t key)
 {
     node *found = getRecursive(this->root, key);
     if (found == NULL)
@@ -47,7 +70,7 @@ void *TreeMap::get(uint64_t key)
 }
 
 
-node_t *TreeMap::setRecursive(node_t *node, uint64_t key, void *value)
+node_t *TreeMap::setRecursive(node_t *node, uint64_t key, badlang_object *value)
 {
     if (node == NULL)
         return newNode(key, value);
@@ -63,7 +86,7 @@ node_t *TreeMap::setRecursive(node_t *node, uint64_t key, void *value)
 }
 
 
-void TreeMap::set(uint64_t key, void *value)
+void TreeMap::set(uint64_t key, badlang_object *value)
 {
     this->root = setRecursive(this->root, key, value);
 }
@@ -75,7 +98,7 @@ void TreeMap::print_map_recursive(node_t *cur)
         return;
 
     print_map_recursive(cur->left);
-    badlang_object *cur_obj = (badlang_object *) (cur->value);
+    badlang_object *cur_obj = cur->value;
     if (cur_obj->type == TYPE_INTEGER)
     {
         printf("%" PRId64 "\n", *((int64_t *) cur_obj->ptr));
@@ -115,7 +138,7 @@ void TreeMap::init_iterator()
 }
 
 
-void *TreeMap::iterate()
+badlang_object *TreeMap::iterate()
 {
     // grab current nesting iterator
     std::stack<node_t *> *iter = this->iterators.top();

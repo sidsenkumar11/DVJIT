@@ -310,3 +310,12 @@ void jit_compare_regs(
     a.mov(rsi, register_ref(reg_two));
     a.call((uint64_t) (&compare_regs));
 }
+
+void jit_assert_valid_regno(int64_t regnum) {
+    if (regnum < 0 || regnum >= N_REGISTERS)
+    {
+        cerr << "Register " << regnum << " out of range!" << endl;
+        cerr << "Must be in range [0, " << N_REGISTERS << ")" << endl;
+        exit(1);
+    }
+}

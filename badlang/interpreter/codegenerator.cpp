@@ -63,6 +63,8 @@ void CodeGenerator::visitIfElseNode(IfElseNode* node)
     Label endif = a.newLabel();
 
     // verify test regs are initialized
+    jit_assert_valid_regno(node->integer_1->value);
+    jit_assert_valid_regno(node->integer_2->value);
     jit_verify_reg(a, node->integer_1->value, TYPE_HASHABLE);
     jit_verify_reg(a, node->integer_2->value, TYPE_HASHABLE);
 
@@ -96,6 +98,8 @@ void CodeGenerator::visitWhileNode(WhileNode* node)
 
     // verify and load test regs
     a.bind(loop);
+    jit_assert_valid_regno(node->integer_1->value);
+    jit_assert_valid_regno(node->integer_2->value);
     jit_verify_reg(a, node->integer_1->value, TYPE_INTEGER);
     jit_verify_reg(a, node->integer_2->value, TYPE_INTEGER);
     jit_load_integer(a, rax, node->integer_1->value);
@@ -113,21 +117,29 @@ void CodeGenerator::visitWhileNode(WhileNode* node)
 
 void CodeGenerator::visitLoadiNode(LoadiNode* node)
 {
+    jit_assert_valid_regno(node->integer_1->value);
     jit_set_register_to_int(a, node->integer_1->value, node->integer_2->value);
 }
 
 void CodeGenerator::visitLoadsNode(LoadsNode* node)
 {
+    jit_assert_valid_regno(node->integer->value);
     jit_set_register_to_string(a, node->integer->value, node->string->value);
 }
 
 void CodeGenerator::visitMoveNode(MoveNode* node)
 {
+    jit_assert_valid_regno(node->integer_1->value);
+    jit_assert_valid_regno(node->integer_2->value);
     jit_move_register(a, node->integer_1->value, node->integer_2->value);
 }
 
 void CodeGenerator::visitAddNode(AddNode* node)
 {
+    jit_assert_valid_regno(node->integer_1->value);
+    jit_assert_valid_regno(node->integer_2->value);
+    jit_assert_valid_regno(node->integer_3->value);
+
     jit_verify_reg(a, node->integer_2->value, TYPE_INTEGER);
     jit_verify_reg(a, node->integer_3->value, TYPE_INTEGER);
     jit_load_integer(a, rax, node->integer_2->value);
@@ -138,6 +150,10 @@ void CodeGenerator::visitAddNode(AddNode* node)
 
 void CodeGenerator::visitMulNode(MulNode* node)
 {
+    jit_assert_valid_regno(node->integer_1->value);
+    jit_assert_valid_regno(node->integer_2->value);
+    jit_assert_valid_regno(node->integer_3->value);
+
     jit_verify_reg(a, node->integer_2->value, TYPE_INTEGER);
     jit_verify_reg(a, node->integer_3->value, TYPE_INTEGER);
     jit_load_integer(a, rax, node->integer_2->value);
@@ -149,6 +165,10 @@ void CodeGenerator::visitMulNode(MulNode* node)
 
 void CodeGenerator::visitDivNode(DivNode* node)
 {
+    jit_assert_valid_regno(node->integer_1->value);
+    jit_assert_valid_regno(node->integer_2->value);
+    jit_assert_valid_regno(node->integer_3->value);
+
     jit_verify_reg(a, node->integer_2->value, TYPE_INTEGER);
     jit_verify_reg(a, node->integer_3->value, TYPE_INTEGER);
     jit_load_integer(a, rax, node->integer_2->value);
@@ -160,6 +180,7 @@ void CodeGenerator::visitDivNode(DivNode* node)
 
 void CodeGenerator::visitPrintNode(PrintNode* node)
 {
+    jit_assert_valid_regno(node->integer->value);
     jit_print_register(a, node->integer->value);
 }
 
@@ -181,6 +202,7 @@ void CodeGenerator::visitStringNode(StringNode* node)
 
 void CodeGenerator::visitJumpNode(JumpNode *node)
 {
+    jit_assert_valid_regno(node->integer->value);
     jit_verify_reg(a, node->integer->value, TYPE_INTEGER);
     jit_load_integer(a, rax, node->integer->value);
 
@@ -193,6 +215,7 @@ void CodeGenerator::visitJumpNode(JumpNode *node)
 
 void CodeGenerator::visitJumpAbsNode(JumpAbsNode *node)
 {
+    jit_assert_valid_regno(node->integer->value);
     jit_verify_reg(a, node->integer->value, TYPE_INTEGER);
     jit_load_integer(a, rax, node->integer->value);
     a.jmp(rax);
@@ -200,6 +223,8 @@ void CodeGenerator::visitJumpAbsNode(JumpAbsNode *node)
 
 void CodeGenerator::visitLeakJitNode(LeakJitNode *node)
 {
+    jit_assert_valid_regno(node->integer->value);
+
     Label pop_rax = a.newLabel();
     a.call(pop_rax);
     a.bind(pop_rax);
@@ -211,11 +236,16 @@ void CodeGenerator::visitLeakJitNode(LeakJitNode *node)
 
 void CodeGenerator::visitDictInitNode(DictInitNode *node)
 {
+    jit_assert_valid_regno(node->integer->value);
     jit_set_register_to_dict(a, node->integer->value);
 }
 
 void CodeGenerator::visitGetDictNode(GetDictNode *node)
 {
+    jit_assert_valid_regno(node->integer_1->value);
+    jit_assert_valid_regno(node->integer_2->value);
+    jit_assert_valid_regno(node->integer_3->value);
+
     jit_verify_reg(a, node->integer_2->value, TYPE_ANY);
     jit_verify_reg(a, node->integer_3->value, TYPE_DICT);
     jit_get_dict(a, node->integer_1->value, node->integer_2->value, node->integer_3->value);
@@ -223,6 +253,10 @@ void CodeGenerator::visitGetDictNode(GetDictNode *node)
 
 void CodeGenerator::visitSetDictNode(SetDictNode *node)
 {
+    jit_assert_valid_regno(node->integer_1->value);
+    jit_assert_valid_regno(node->integer_2->value);
+    jit_assert_valid_regno(node->integer_3->value);
+
     jit_verify_reg(a, node->integer_1->value, TYPE_ANY);
     jit_verify_reg(a, node->integer_2->value, TYPE_HASHABLE);
     jit_verify_reg(a, node->integer_3->value, TYPE_DICT);
@@ -231,6 +265,9 @@ void CodeGenerator::visitSetDictNode(SetDictNode *node)
 
 void CodeGenerator::visitForKeyNode(ForKeyNode *node)
 {
+    jit_assert_valid_regno(node->integer_1->value);
+    jit_assert_valid_regno(node->integer_2->value);
+
     // init iterator
     jit_verify_reg(a, node->integer_1->value, TYPE_DICT);
     jit_init_forkey_iter(a, node->integer_1->value);

@@ -100,6 +100,7 @@ tests: badlang
 	for f in $(shell ls ${TEST_DIR}); do \
 		../tests/$${f} || exit 1; \
 	done
+	@echo "Done running tests"
 
 .PHONY: clean
 clean:

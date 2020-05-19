@@ -30,6 +30,7 @@
 %token T_ENDWHILE
 %token T_INTEGER
 %token T_STRING
+%token T_MINUS
 
 %token T_JUMP
 %token T_JUMPABS
@@ -103,6 +104,10 @@ Statement       : Print ';'          { $$ = $1; }
                 ;
 
 Loadi           : T_LOADI T_INTEGER T_INTEGER { $$ = new LoadiNode($2, $3); }
+                | T_LOADI T_INTEGER T_MINUS T_INTEGER {
+                    $$ = new LoadiNode($2, $4);
+                    $$->integer_2->value = -$$->integer_2->value;
+                  }
                 ;
 
 Loads           : T_LOADS T_INTEGER T_STRING { $$ = new LoadsNode($2, $3); }

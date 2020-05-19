@@ -177,3 +177,8 @@ void jit_compare_regs(
     uint8_t reg_one,
     uint8_t reg_two
 );
+
+/**
+ * Throws error if regnum is not in range 0 <= regnum < N_REGISTERS
+ */
+void jit_assert_valid_regno(int64_t regnum);
