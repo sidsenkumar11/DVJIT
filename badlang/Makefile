@@ -97,7 +97,7 @@ test: badlang
 
 # for travis, have the makefile return "error" if test fails
 tests: badlang
-	@for f in $(shell ls ${TEST_DIR}); do \
+	for f in $(shell ls ${TEST_DIR}); do \
 		../tests/$${f} 1>/dev/null || exit 1; \
 	done
 
