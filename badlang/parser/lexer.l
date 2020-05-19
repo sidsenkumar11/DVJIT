@@ -61,7 +61,7 @@
     return T_STRING;
   }
 
-
+ /* Match integers */
 0|([1-9][0-9]*)   {
                     long long value = strtoll(yytext, NULL, 0);
                     if (errno != 0 || value > LONG_MAX || value < LONG_MIN)
@@ -70,6 +70,9 @@
                     yylval.integer_ptr = new IntegerNode(value);
                     return T_INTEGER;
                   }
+
+ /* Match negatives as their own token */
+"-"               { return T_MINUS; }
 
 
 "#"               { BEGIN(COMMENT); }
