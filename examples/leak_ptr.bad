@@ -83,5 +83,5 @@ ELSE
     ENDWHILE
 
     # Verify address by jumping to it
-    JUMP 4;
+    JUMPABS 4;
 ENDIF

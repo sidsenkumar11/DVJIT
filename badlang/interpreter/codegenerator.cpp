@@ -192,6 +192,13 @@ void CodeGenerator::visitJumpNode(JumpNode *node)
     a.jmp(rax);
 }
 
+void CodeGenerator::visitJumpAbsNode(JumpAbsNode *node)
+{
+    jit_verify_reg(a, node->integer->value, TYPE_INTEGER);
+    jit_load_integer(a, rax, node->integer->value);
+    a.jmp(rax);
+}
+
 void CodeGenerator::visitLeakJitNode(LeakJitNode *node)
 {
     Label pop_rax = a.newLabel();

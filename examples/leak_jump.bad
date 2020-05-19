@@ -9,7 +9,7 @@ LEAKJIT 0;
 IFNEQ 1 2
     PRINT 4;
     ADD 1 1 3;
-    JUMP 0;
+    JUMPABS 0;
 ENDIF
 
 PRINT 5;
