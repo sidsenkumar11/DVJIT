@@ -103,4 +103,4 @@ tests:
 
 .PHONY: clean
 clean:
-	$(RM) -r badlang build
+	$(RM) -r bin build
