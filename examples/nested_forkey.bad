@@ -1,0 +1,39 @@
+DICTINIT 100;
+
+LOADI 0 0;
+LOADI 1 3;
+LOADI 2 1;
+
+# init dict
+WHILELT 0 1
+
+    SETDICT 0 0 100;
+    ADD 0 0 2;
+
+ENDWHILE
+
+# nested print
+FORKEY 100 0
+    LOADS 10 "------------------------------------------";
+    PRINT 10;
+    LOADS 10 "OUTER";
+    PRINT 10;
+    PRINT 0;
+
+    FORKEY 100 1
+        LOADS 10 "------------------------------------------";
+        PRINT 10;
+        LOADS 10 "MIDDLE";
+        PRINT 10;
+        PRINT 1;
+
+        FORKEY 100 2
+            LOADS 10 "------------------------------------------";
+            PRINT 10;
+            LOADS 10 "INNER";
+            PRINT 10;
+            PRINT 2;
+
+        ENDFORKEY
+    ENDFORKEY
+ENDFORKEY

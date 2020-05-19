@@ -1,0 +1,63 @@
+DICTINIT 100;
+LOADI 0 0;
+LOADI 1 10;
+LOADI 2 1;
+
+# store squares of [0, 9] and a random string for index 1
+WHILELT 0 1
+
+    IFEQ 0 2
+        LOADS 3 "Strings are in here too!";
+        SETDICT 0 3 100;
+
+        LOADS 50 "Here's a string with an address key";
+        SETDICT 50 50 100;
+    ELSE
+        MUL 3 0 0;
+        SETDICT 0 3 100;
+    ENDIF
+
+    # i += 1
+    ADD 0 0 2;
+
+ENDWHILE
+
+LOADS 5 "---------------------------";
+PRINT 5;
+LOADS 5 "ITERATING WITH JUST INDEXES";
+PRINT 5;
+LOADS 5 "---------------------------";
+PRINT 5;
+
+# print squares using "new" int keys
+LOADI 3 0;
+WHILELT 3 1
+
+    GETDICT 4 3 100;
+    PRINT 4;
+
+    # i += 1
+    ADD 3 3 2;
+
+ENDWHILE
+
+LOADS 5 "---------------------------";
+PRINT 5;
+LOADS 5 "NOW ITERATING USING FORKEY";
+PRINT 5;
+LOADS 5 "---------------------------";
+PRINT 5;
+
+FORKEY 100 0
+    PRINT 0;
+ENDFORKEY
+
+
+LOADS 5 "---------------------------";
+PRINT 5;
+LOADS 5 "NOW CALLING PRINT ON DICT";
+PRINT 5;
+LOADS 5 "---------------------------";
+PRINT 5;
+
+PRINT 100;

@@ -10,99 +10,6 @@ using namespace std;
 using namespace asmjit;
 using namespace asmjit::x86;
 
-
-#define N_REGISTERS (128)
-
-
-jit_result *jit_compile(std::stringstream &program)
-{
-    //
-    // Create a runtime and a code holder for asmjit
-    //
-    asmjit::JitRuntime *jit = new asmjit::JitRuntime();
-    CodeHolder code;
-    code.init(jit->codeInfo());
-    x86::Assembler a(&code);
-
-    //
-    // Add code to the assembler, as needed
-    //
-    jit_prologue(a);
-
-    // TESTING some stuff
-    // set reg0 to be an int
-    jit_set_register_to_string(a, 0, "hello, world");
-    jit_print_register(a, 0, TYPE_STRING);
-
-    jit_set_register_to_int(a, 1, 1337);
-    jit_print_state(a);
-    // END TESTING
-
-    // jit_compiler_loop(a, program);
-
-    jit_epilogue(a);
-
-
-    //
-    // Emit the code
-    //
-    jit_ptr fn;
-    Error err = jit->add(&fn, &code);
-
-    if (err)
-    {
-        std::cerr << "found error!!!" << endl;
-        return nullptr;
-    }
-
-    jit_result *ret = (jit_result*) malloc(sizeof(jit_result));
-    ret->ptr = fn;
-    ret->runtime = jit;
-    return ret;
-}
-
-
-void jit_prologue(asmjit::x86::Assembler &a)
-{
-    // standard function prologue
-    a.push(rbp);
-    a.mov(rbp, rsp);
-
-    // we need room for `N_REGISTERS` 8-byte registers + 2 8-byte test registers
-    a.sub(rsp, sizeof(void *) * N_REGISTERS + sizeof(void *) * 2);
-
-    // zero-out all the registers to NULL
-    a.xor_(rax, rax);
-    for (size_t i = 0; i < N_REGISTERS + 2; i++)
-    {
-        a.mov(register_ref(i), rax);
-    }
-}
-
-
-void jit_epilogue(asmjit::x86::Assembler &a)
-{
-    // standard function epilogue
-    // epilogue
-    a.mov(rsp, rbp);
-    a.pop(rbp);
-    a.ret();
-}
-
-
-void jit_compiler_loop(asmjit::x86::Assembler &a, std::stringstream &program)
-{
-    // make a FIFO stack with Labels for making conditional jumps
-    string line;
-
-    while (std::getline(program, line))
-    {
-        // THIS PRINTS GARBAGE AND IDK WHY .. ignoring for now
-        // cout << line << endl;
-    }
-}
-
-
 void jit_print_state(asmjit::x86::Assembler &a)
 {
     // NOTE since this is for debugging I'll save a bunch of registers
@@ -129,7 +36,7 @@ void jit_print_state(asmjit::x86::Assembler &a)
     Label loop = a.newLabel();
     Label exit = a.newLabel();
     a.mov(rax, 0);                 // let i = 0;
-    
+
     a.mov(rbx, rbp);               // let ptr = register[0];
     a.sub(rbx, sizeof(void *));
 
@@ -170,6 +77,24 @@ void jit_print_state(asmjit::x86::Assembler &a)
 }
 
 
+asmjit::x86::Mem register_ref(uint8_t reg_id)
+{
+    if (reg_id > N_REGISTERS + 2)
+    {
+        throw -1;
+    }
+    return x86::qword_ptr(rbp, - sizeof(void *) * (reg_id + 1));
+}
+
+
+void jit_verify_reg(asmjit::x86::Assembler &a, uint8_t reg, object_type expected)
+{
+    a.mov(rdi, register_ref(reg));
+    a.mov(rsi, expected);
+    a.call((uint64_t)(&verify_reg));
+}
+
+
 void jit_alloc_string_literal(asmjit::x86::Assembler &a, std::string val)
 {
     // we're going to clobber the following regs, so save them
@@ -184,7 +109,7 @@ void jit_alloc_string_literal(asmjit::x86::Assembler &a, std::string val)
     a.mov(rbx, rax);
 
     // cool party trick -- greedily set 8 bytes at a time
-    for (size_t i = 0; i < val.size() - 8; i += 4)
+    for (size_t i = 0; i < val.size() / 8; i += 8)
     {
         uint64_t qword = 0;
         for (size_t j = 0; j < 8; j++)
@@ -198,7 +123,7 @@ void jit_alloc_string_literal(asmjit::x86::Assembler &a, std::string val)
     }
 
     // now, set the remaining chars individually
-    for (size_t i = std::max((size_t)0, val.size() - 8); i < val.size(); i++)
+    for (size_t i = val.size() / 8; i < val.size(); i++)
     {
         a.mov(cx, val.at(i));
         a.mov(x86::byte_ptr(rbx, i), cx);
@@ -215,11 +140,12 @@ void jit_alloc_string_literal(asmjit::x86::Assembler &a, std::string val)
 
 void jit_alloc_integer_literal(asmjit::x86::Assembler &a, int64_t val)
 {
-    // call malloc
     a.mov(rdi, sizeof(int64_t));
     a.call((uint64_t)(&malloc));
     // rax now contains a pointer, move our value into it
-    a.mov(x86::qword_ptr(rax), val);
+    // move 4 bytes at a time because we can't give 8 byte immediates
+    a.mov(x86::dword_ptr(rax, 4), (val & 0xFFFFFFFF00000000) >> 32);
+    a.mov(x86::dword_ptr(rax), val & 0xFFFFFFFF);
 }
 
 
@@ -228,9 +154,11 @@ void jit_set_register_to_string(
     uint8_t register_id,
     std::string val
 ) {
-    jit_alloc_string_literal(a, val);    // char *s = allocate_string(val);
-    a.mov(rdi, rbp);
-    a.sub(rdi, sizeof(void *) * (register_id + 1));
+    // char *s = allocate_string(val);
+    jit_alloc_string_literal(a, val);
+
+    // set_register_to_string(regs[register_id], s);
+    a.mov(rdi, register_ref(register_id));
     a.mov(rsi, rax);
     a.call((uint64_t)(&set_register_to_string));
 }
@@ -241,38 +169,132 @@ void jit_set_register_to_int(
     uint8_t register_id,
     int64_t val
 ) {
+    // int64_t *num = allocate_integer(val);
     jit_alloc_integer_literal(a, val);
-    a.mov(rdi, rbp);
-    a.sub(rdi, sizeof(void *) * (register_id + 1));
+
+    // set_register_to_int(regs[register_id], num);
+    a.mov(rdi, register_ref(register_id));
     a.mov(rsi, rax);
     a.call((uint64_t)(&set_register_to_int));
 }
 
 
-void jit_print_register(
+void jit_set_register_to_int(
     asmjit::x86::Assembler &a,
     uint8_t register_id,
-    object_type expected_type
+    asmjit::x86::Gp source
+) {
+    // allocate a new integer pointer
+    a.push(source);
+    jit_alloc_integer_literal(a, 0);
+    a.pop(qword_ptr(rax));
+
+    // set the integer pointer in the badlong object
+    a.mov(rdi, register_ref(register_id));
+    a.mov(rsi, rax);
+    a.call((uint64_t)(&set_register_to_int));
+}
+
+
+void jit_set_register_to_dict(
+    asmjit::x86::Assembler &a,
+    uint8_t register_id
 ) {
     a.mov(rdi, register_ref(register_id));
-    a.mov(rsi, expected_type);
+    a.call((uint64_t)(&set_register_to_dict));
+}
+
+
+void jit_print_register(
+    asmjit::x86::Assembler &a,
+    uint8_t register_id
+) {
+    a.mov(rdi, register_ref(register_id));
     a.call((uint64_t)(&print_register));
 }
 
 
-asmjit::x86::Mem register_ref(uint8_t reg_id)
-{
-    if (reg_id > N_REGISTERS + 2)
-    {
-        throw -1;
-    }
-    return x86::qword_ptr(rbp, - sizeof(void *) * (reg_id + 1));
+void jit_load_integer(
+    asmjit::x86::Assembler &a,
+    asmjit::x86::Gp dest,
+    uint8_t register_id
+) {
+    a.mov(dest, register_ref(register_id));
+    a.mov(dest, qword_ptr(dest, 8));
+    a.mov(dest, qword_ptr(dest));
 }
 
 
-void jit_release(jit_result *jit)
+void jit_move_register(asmjit::x86::Assembler &a, uint8_t dest, uint8_t src)
 {
-    jit->runtime->release(jit->ptr);
-    delete jit->runtime;
-    free(jit);
+    a.mov(rdi, register_ref(dest));
+    a.mov(rsi, register_ref(src));
+    a.call((uint64_t)(&move_register));
+}
+
+
+void jit_get_dict(
+    asmjit::x86::Assembler &a,
+    uint8_t dest_reg,
+    uint8_t key_reg,
+    uint8_t dict_reg
+) {
+    // load dict class pointer
+    a.mov(rdi, register_ref(dict_reg));
+    a.mov(rdi, qword_ptr(rdi, 8));
+
+    // load key object
+    a.mov(rsi, register_ref(key_reg));
+
+    // load dest object
+    a.mov(rdx, register_ref(dest_reg));
+
+    // copy dict value into dest register
+    a.call((uint64_t)(&get_dict));
+}
+
+
+void jit_set_dict(
+    asmjit::x86::Assembler &a,
+    uint8_t key_reg,
+    uint8_t val_reg,
+    uint8_t dict_reg
+) {
+    // load dict class pointer
+    a.mov(rdi, register_ref(dict_reg));
+    a.mov(rdi, qword_ptr(rdi, 8));
+
+    // load key object
+    a.mov(rsi, register_ref(key_reg));
+
+    // load value object
+    a.mov(rdx, register_ref(val_reg));
+
+    a.call((uint64_t)(&set_dict));
+}
+
+
+void jit_init_forkey_iter(
+    asmjit::x86::Assembler &a,
+    uint8_t dict_reg
+) {
+    a.mov(rdi, register_ref(dict_reg));
+    a.mov(rdi, qword_ptr(rdi, 8));
+    a.call((uint64_t)(&init_iterator));
+}
+
+
+void jit_forkey_iter(
+    asmjit::x86::Assembler &a,
+    uint8_t dict_reg,
+    uint8_t dest_reg
+) {
+    // load dict pointer
+    a.mov(rdi, register_ref(dict_reg));
+    a.mov(rdi, qword_ptr(rdi, 8));
+
+    // load dest reg
+    a.mov(rsi, register_ref(dest_reg));
+
+    a.call((uint64_t)(&iterate));
 }
