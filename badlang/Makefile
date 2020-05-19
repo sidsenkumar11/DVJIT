@@ -1,5 +1,10 @@
 .DEFAULT_GOAL := badlang
 
+SHELL := /bin/bash
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m'
+
 # --------------------------------------------
 # Asmjit
 # --------------------------------------------
@@ -76,6 +81,25 @@ bin/badlang: $(OBJS_A) $(OBJS_P) $(OBJS_I)
 	g++ ${CFLAGS_I} ${INCLUDES_I} -o $@ $^ ${LD_FLAGS}
 
 badlang: bin/badlang
+
+
+# --------------------------------------------
+# Tests
+# --------------------------------------------
+TEST_DIR=../tests
+
+# for local testing
+test:
+	@for f in $(shell ls ${TEST_DIR}); do \
+		(../tests/$${f} 1>/dev/null && \
+		/bin/echo -e ${GREEN}PASS${NC} $${f} ) || /bin/echo -e ${RED}FAIL${NC} $${f}; \
+	done
+
+# for travis, have the makefile return "error" if test fails
+tests:
+	@for f in $(shell ls ${TEST_DIR}); do \
+		../tests/$${f} 1>/dev/null || exit 1; \
+	done
 
 .PHONY: clean
 clean:
