@@ -80,3 +80,14 @@ int iterate(TreeMap *map, badlang_object *dest_obj);
  * Integers are deep copied while strings and dicts are shallow copied.
  */
 void move_register(badlang_object *dest, badlang_object *src);
+
+
+/**
+ * Unescape a string, and return the result
+ *
+ * Examples:
+ *   "a\x41a" => "aAa"
+ *   "a\na"   => "a<newline>a"
+ *   "a\ta"   => "a<tab>a"
+ */
+std::string unescape_string(std::string src);
