@@ -8,7 +8,7 @@ branches:
 
 install:
     - sudo apt-get -y install flex bison make g++
-    - sudo -H pip3 install pwntools
+    - sudo -H python3 -m pip install pwntools
 
 notifications:
     email:
