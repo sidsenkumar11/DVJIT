@@ -103,12 +103,9 @@ void dealloc_object(badlang_object *obj)
     if (obj->type == TYPE_DICT)
     {
         TreeMap *map = (TreeMap *) (obj->ptr);
-        delete map;
+        map->~TreeMap();
     }
-    else
-    {
-        alloc_free(obj->ptr);
-    }
+    alloc_free(obj->ptr);
 }
 
 
@@ -132,7 +129,9 @@ void set_register_to_dict(badlang_object *obj)
 {
     dealloc_object(obj);
     obj->type = TYPE_DICT;
-    obj->ptr = new TreeMap();
+
+    void *obj_space = alloc_get(sizeof(TreeMap));
+    obj->ptr = new (obj_space) TreeMap();
 }
 
 
