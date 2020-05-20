@@ -53,6 +53,30 @@ void CodeGenerator::visitProgramNode(ProgramNode* node)
     node->visit_children(this);
 
     // epilogue
+
+    // i = 0
+    a.mov(rbx, 0);
+
+    // if (i >= N_REGISTERS) goto: done_free
+    Label check_free = a.newLabel();
+    Label done_free = a.newLabel();
+    a.bind(check_free);
+    a.cmp(rbx, N_REGISTERS);
+    a.jge(done_free);
+
+    // free the virtual registers
+    a.mov(rax, rbx);
+    a.add(rax, 1);
+    a.imul(rax, sizeof(void *));
+    a.neg(rax);
+    a.mov(rdi, qword_ptr(rbp, rax));
+    a.call((uint64_t)(&free));
+
+    // loop back
+    a.add(rbx, 1);
+    a.jmp(check_free);
+    a.bind(done_free);
+
     a.leave();
     a.ret();
 }
