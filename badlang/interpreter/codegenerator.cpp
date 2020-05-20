@@ -29,9 +29,8 @@ void CodeGenerator::visitProgramNode(ProgramNode* node)
     a.jge(done_objects);
 
     // rax = calloc(1, sizeof(badlang_object))
-    a.mov(rdi, 1);
-    a.mov(rsi, sizeof(badlang_object));
-    a.call((uint64_t)(&calloc));
+    // except instead of calloc we use our allocator
+    jit_alloc_virtualreg(a);
 
     // set regno
     a.mov(qword_ptr(rax, 16), rbx);
@@ -70,7 +69,7 @@ void CodeGenerator::visitProgramNode(ProgramNode* node)
     a.imul(rax, sizeof(void *));
     a.neg(rax);
     a.mov(rdi, qword_ptr(rbp, rax));
-    a.call((uint64_t)(&free));
+    jit_free_virtualreg(a);
 
     // loop back
     a.add(rbx, 1);

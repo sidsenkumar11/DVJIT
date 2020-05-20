@@ -73,5 +73,6 @@ int main(int argc, char **argv)
     // cleanup
     jit->release(fn);
     delete jit;
+    delete visitor;
     return 0;
 }

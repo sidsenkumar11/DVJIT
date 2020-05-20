@@ -96,6 +96,20 @@ void jit_verify_reg(asmjit::x86::Assembler &a, uint8_t reg, object_type expected
     a.call((uint64_t)(&verify_reg));
 }
 
+void jit_alloc_virtualreg(asmjit::x86::Assembler &a)
+{
+    a.mov(rdi, sizeof(badlang_object));
+    a.call((uint64_t)(&alloc_get));
+
+    // clear out ptr
+    a.mov(qword_ptr(rax, 8), 0);
+}
+
+void jit_free_virtualreg(asmjit::x86::Assembler &a)
+{
+    a.call((uint64_t)(&alloc_free));
+}
+
 
 void jit_alloc_string_literal(asmjit::x86::Assembler &a, std::string val)
 {

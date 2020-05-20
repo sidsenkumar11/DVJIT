@@ -50,6 +50,16 @@ void jit_verify_reg(asmjit::x86::Assembler &a, uint8_t reg, object_type expected
 
 
 /**
+ * Allocates a virtual register badlang_object and clears out the data pointer
+ */
+void jit_alloc_virtualreg(asmjit::x86::Assembler &a);
+
+/**
+ * Deallocates a virtual register pointer
+ */
+void jit_free_virtualreg(asmjit::x86::Assembler &a);
+
+/**
  * Allocates a string literal, leaves result after alloc in rax
  */
 void jit_alloc_string_literal(asmjit::x86::Assembler &a, std::string val);
