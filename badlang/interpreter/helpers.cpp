@@ -4,6 +4,8 @@
 #include <inttypes.h>
 #include <iostream>
 #include <stdlib.h>
+
+#include "allocator.hpp"
 #include "jit_compile.hpp"
 #include "treemap.hpp"
 
@@ -105,7 +107,7 @@ void dealloc_object(badlang_object *obj)
     }
     else
     {
-        free(obj->ptr);
+        alloc_free(obj->ptr);
     }
 }
 
@@ -150,7 +152,7 @@ void move_register(badlang_object *dest, badlang_object *src)
     dest->type = src->type;
     if (src->type == TYPE_INTEGER)
     {
-        dest->ptr = malloc(sizeof(int64_t));
+        dest->ptr = alloc_get(sizeof(int64_t));
         *(int64_t *)(dest->ptr) = *(int64_t *)(src->ptr);
     }
     else if (src->type == TYPE_STRING || src->type == TYPE_DICT)
@@ -185,12 +187,12 @@ void get_dict(TreeMap *map, badlang_object *key_obj, badlang_object *dest_obj)
 
     if (copy->type == TYPE_INTEGER)
     {
-        dest_obj->ptr = malloc(sizeof(int64_t));
+        dest_obj->ptr = alloc_get(sizeof(int64_t));
         memcpy(dest_obj->ptr, copy->ptr, sizeof(int64_t));
     }
     else
     {
-        dest_obj->ptr = malloc(strlen((char *) copy->ptr)+1);
+        dest_obj->ptr = alloc_get(strlen((char *) copy->ptr)+1);
         strcpy((char *) dest_obj->ptr, (char *) copy->ptr);
     }
 }
@@ -209,17 +211,17 @@ void set_dict(TreeMap *map, badlang_object *key_obj, badlang_object *val_obj)
     }
 
     // make a deep copy of the value
-    badlang_object *copy = (badlang_object *) malloc(sizeof(badlang_object));
+    badlang_object *copy = (badlang_object *) alloc_get(sizeof(badlang_object));
     copy->type = val_obj->type;
 
     if (val_obj->type == TYPE_INTEGER)
     {
-        copy->ptr = malloc(sizeof(int64_t));
+        copy->ptr = alloc_get(sizeof(int64_t));
         memcpy(copy->ptr, val_obj->ptr, sizeof(int64_t));
     }
     else
     {
-        copy->ptr = malloc(strlen((char *) val_obj->ptr)+1);
+        copy->ptr = alloc_get(strlen((char *) val_obj->ptr)+1);
         strcpy((char *) copy->ptr, (char *) val_obj->ptr);
     }
 
@@ -246,12 +248,12 @@ int iterate(TreeMap *map, badlang_object *dest_obj)
 
     if (copy->type == TYPE_INTEGER)
     {
-        dest_obj->ptr = malloc(sizeof(int64_t));
+        dest_obj->ptr = alloc_get(sizeof(int64_t));
         memcpy(dest_obj->ptr, copy->ptr, sizeof(int64_t));
     }
     else
     {
-        dest_obj->ptr = malloc(strlen((char *) copy->ptr)+1);
+        dest_obj->ptr = alloc_get(strlen((char *) copy->ptr)+1);
         strcpy((char *) dest_obj->ptr, (char *) copy->ptr);
     }
     return 0;

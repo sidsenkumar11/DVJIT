@@ -2,6 +2,8 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+
+#include "allocator.hpp"
 #include "helpers.hpp"
 #include "asmjit/asmjit.h"
 #include "jit_compile.hpp"
@@ -29,7 +31,7 @@ void jit_print_state(asmjit::x86::Assembler &a)
     a.mov(al, 0);      // al contains the number of floating-point arguments (zero)
     a.call((uint64_t)(&printf));
     a.pop(rdi);        // restore the string pointer so we can free() it
-    a.call((uint64_t)(&free));
+    a.call((uint64_t)(&alloc_free));
 
 
     // Iterate over each register and dump its content if not null
@@ -66,7 +68,7 @@ void jit_print_state(asmjit::x86::Assembler &a)
     a.mov(al, 0);
     a.call((uint64_t)(&printf));
     a.pop(rdi);
-    a.call((uint64_t)(&free));
+    a.call((uint64_t)(&alloc_free));
 
     a.pop(rsi);
     a.pop(rdi);
@@ -97,13 +99,23 @@ void jit_verify_reg(asmjit::x86::Assembler &a, uint8_t reg, object_type expected
 
 void jit_alloc_string_literal(asmjit::x86::Assembler &a, std::string val)
 {
+    // set up a stack frame
+    a.push(rbp);
+    a.mov(rbp, rsp);
+
     // we're going to clobber the following regs, so save them
+    // save the stack pointer
     a.push(rbx);
     a.push(rdi);
     a.push(rcx);
 
+    // BUG FIX: ensure the stack is 16-byte aligned (as required in system v abi)
+    a.mov(rbx, 0b1111);
+    a.and_(rbx, rsp);
+    a.and_(rsp, ~((uint64_t)0b1111));
+
     a.mov(rdi, val.size() + 1);
-    a.call((uint64_t)(&malloc));
+    a.call((uint64_t)(&alloc_get));
 
     // DANGEROUS -- assume malloc completed successfully, do not check RAX for null
     a.mov(rbx, rax);
@@ -134,16 +146,21 @@ void jit_alloc_string_literal(asmjit::x86::Assembler &a, std::string val)
     // null-terminate
     a.mov(x86::byte_ptr(rbx, val.size()), 0);
 
-    a.pop(rcx);
-    a.pop(rdi);
-    a.pop(rbx);
+    // restore values
+    a.mov(rcx, x86::Mem(rbp, -8*3));
+    a.mov(rdi, x86::Mem(rbp, -8*2));
+    a.mov(rbx, x86::Mem(rbp, -8*1));
+
+
+    a.mov(rsp, rbp);
+    a.pop(rbp);
 }
 
 
 void jit_alloc_integer_literal(asmjit::x86::Assembler &a, int64_t val)
 {
     a.mov(rdi, sizeof(int64_t));
-    a.call((uint64_t)(&malloc));
+    a.call((uint64_t)(&alloc_get));
     // rax now contains a pointer, move our value into it
     // move 4 bytes at a time because we can't give 8 byte immediates
     a.mov(x86::dword_ptr(rax, 4), (val & 0xFFFFFFFF00000000) >> 32);
