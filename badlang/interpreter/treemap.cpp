@@ -1,4 +1,5 @@
 #include "treemap.hpp"
+#include "allocator.hpp"
 #include <stdlib.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -27,15 +28,15 @@ void TreeMap::recursive_deallocate(node_t *node)
     recursive_deallocate(node->right);
 
     badlang_object *obj = node->value;
-    free(obj->ptr);
-    free(obj);
-    free(node);
+    alloc_free(obj->ptr);
+    alloc_free(obj);
+    alloc_free(node);
 }
 
 
 node_t *TreeMap::newNode(uint64_t key, badlang_object *value)
 {
-    node_t *temp = (node_t *) malloc(sizeof(node_t));
+    node_t *temp = (node_t *) alloc_get(sizeof(node_t));
     temp->key   = key;
     temp->value = value;
     temp->left  = NULL;
