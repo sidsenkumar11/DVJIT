@@ -132,7 +132,8 @@ void TreeMap::inorder_push(node_t *cur, std::stack<node_t *> *stack)
 void TreeMap::init_iterator()
 {
     // push new nesting iterator
-    this->iterators.push(new std::stack<node_t *>());
+    void *obj_space = alloc_get(sizeof(std::stack<node_t *>));
+    this->iterators.push(new (obj_space) std::stack<node_t *>());
 
     // build iterator stack
     inorder_push(this->root, this->iterators.top());
@@ -148,7 +149,8 @@ badlang_object *TreeMap::iterate()
     if (iter->empty())
     {
         this->iterators.pop();
-        delete iter;
+        iter->~stack();
+        alloc_free(iter);
         return nullptr;
     }
 
