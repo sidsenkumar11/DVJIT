@@ -1,8 +1,11 @@
+#include <unistd.h>
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <sys/mman.h>
 #include <cstring>
 #include <vector>
+#include "allocator.hpp"
 #include "codegenerator.hpp"
 #include "helpers.hpp"
 #include "ast.hpp"
@@ -65,6 +68,15 @@ int main(int argc, char **argv)
         std::cerr << "asmjit error" << endl;
         return 1;
     }
+
+    // Initialize memory allocator
+    // Note: I'm not certain how many memory pages asmjit
+    // might occupy, so i'll give it a rather safe buffer
+    // assumption of 4 pages
+    int pagesize = getpagesize();
+    uintptr_t fn_page = (uintptr_t)(&fn) & (~(pagesize - 1));
+    uintptr_t hint = fn_page - pagesize * 128;
+    alloc_init(jit->allocator());
 
     // execute
     if (is_debug()) cout << endl;

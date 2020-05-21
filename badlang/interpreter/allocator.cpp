@@ -1,6 +1,7 @@
 #include "allocator.hpp"
 #include "helpers.hpp"
 
+#include "asmjit/asmjit.h"
 #include <iostream>
 #include <cstdlib>
 #include <sys/mman.h>
@@ -15,12 +16,24 @@ using namespace std;
  */
 static void *alloc_page_start = nullptr;
 
+static asmjit::JitAllocator *my_allocator;
+
+void alloc_init(asmjit::JitAllocator *a)
+{
+    my_allocator = a;
+}
+
 
 /**
  * Acquire memory of size at least `size`.
  */
 void *alloc_get(size_t size)
 {
+    void *foo;
+    void *out;
+    my_allocator->alloc(&foo, &out, size);
+    return out;
+
     if (is_debug())
     {
         cout << "Allocating memory" << endl;
@@ -122,6 +135,9 @@ void *alloc_get(size_t size)
 
 void alloc_free(void *ptr)
 {
+    my_allocator->release(ptr);
+    return;
+
     // for convenience -- bitmask to determine the page of a pointer
     const uintptr_t page_mask = ~((uintptr_t)getpagesize() - 1);
 

@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include "asmjit/asmjit.h"
 #include <cstdlib>
 #include <stdint.h>
 
@@ -36,6 +37,13 @@ struct alloc_entry_header
 };
 
 #define DATA_SECTION(e) (void *)((char *)e + sizeof(alloc_entry_header))
+
+
+/**
+ * Initialize the allocator with a hint address for
+ * placement of the first page of memory
+ */
+void alloc_init(asmjit::JitAllocator *a);
 
 
 /**
