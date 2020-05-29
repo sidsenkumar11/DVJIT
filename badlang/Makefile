@@ -54,7 +54,7 @@ parser: $(OBJS_P)
 # Interpreter
 # --------------------------------------------
 INCLUDES_I=-I$(shell pwd)/
-CFLAGS_I=-g -fno-inline-small-functions -no-pie -Wall
+CFLAGS_I=-g -fno-inline-small-functions -Wall
 CPPS_I=$(shell find interpreter -type f -name '*.cpp')
 OBJS_I=$(patsubst %.cpp, build/%.o, $(CPPS_I))
 $(OBJS_I): | build/interpreter # create build dir first
