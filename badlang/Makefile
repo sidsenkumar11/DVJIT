@@ -96,7 +96,7 @@ test: badlang
 	done
 
 # for travis, have the makefile return "error" if test fails
-tests: badlang
+travis-tests: badlang
 	for f in $(shell ls ${TEST_DIR}); do \
 		../tests/$${f} || (echo "Failed $${f}"; exit 1;) \
 	done

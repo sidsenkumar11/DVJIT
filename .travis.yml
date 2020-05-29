@@ -20,4 +20,4 @@ language: cpp
 script:
     - cd badlang
     - make clean
-    - make tests
+    - make travis-tests
