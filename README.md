@@ -21,20 +21,24 @@ CS 263 Runtime Systems Project
 
 ### Week of May 4
 
-* created src/ directory with asmjit, basic makefile
-* add some debugging features to jit emitted code for ease of use
-* add examples/
+* Created src/ directory with asmjit, basic makefile
+* Add some debugging features to jit emitted code for ease of use
+* Add examples/
 
 ### Week of May 11
-* refactored code and rewrote Makefile
-* created scanner and parser infrastructure for badlang
-* working "fizzbuzz" example
+* Refactored code and rewrote Makefile
+* Created scanner and parser infrastructure for badlang
+* Working "fizzbuzz" example
 
 ### Week of May 18
-* inserted "Dictionary" type into badlang, supporting "get", "set", and iteration through "forkey"
-* inserted "LeakJit" and "Jump" instructions
-* wrote several test programs, including one that leaks a pointer
-* made several quality-of-life improvements to the interpreter (ie the interpreter prints useful error messages instead of segfaulting)
+* Inserted "Dictionary" type into badlang, supporting "get", "set", and iteration through "forkey"
+* Inserted "LeakJit" and "Jump" instructions
+* Wrote several test programs, including one that leaks a pointer
+* Made several quality-of-life improvements to the interpreter (ie the interpreter prints useful error messages instead of segfaulting)
+
+### Week of May 25
+* Made exploit script reliable by using internal AsmJit allocator instead of custom allocator.
+* Began project writeup.
 
 ## Relevant Literature
 
@@ -75,5 +79,5 @@ CS 263 Runtime Systems Project
         * protect RWX memory w/ nearby padding
         * "Constant Folding" break user-supplied input into smaller 2-byte chunks so they can't fit an entire address
         * "Constant Blinding" XOR user-supplied input w/ secret key, and re-XOR during execution. Prevents predictable jit output.
-* [security implications of jit compilation](https://wingolog.org/archives/2011/06/21/security-implications-of-jit-compilation)
+* [Security Implications of JIT Compilation](https://wingolog.org/archives/2011/06/21/security-implications-of-jit-compilation)
     * mostly just echoes what we know to be true: JITs aren't inherently insecure -- bad code is insecure
