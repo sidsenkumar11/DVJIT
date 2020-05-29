@@ -1,0 +1,159 @@
+The following is our unsorted notes from discussions about the project over the months.
+
+
+
+BADLANG:
+
+LOADS 1 “SHELLCODE”
+LEAKJIT 1
+ADD 1 1 <offset>
+JUMP 1
+
+
+
+// dict syntax
+
+
+DICTINIT 1
+SETDICT <key, val, dict>
+GETDICT <dest, key, dict>
+
+Int low = 0;
+Int hi = 0xfffffffff;
+Int foundkey
+While (low < hi & !foundkey)
+{
+   // intuit ordering of (lo + hi) / 2, target
+   if too high:
+       Hi = (low + high) / 2
+
+FORKEY <dict> <current_key>
+
+ENDFORKEY
+}
+
+
+
+LOADFUNC 1 “foo.bad”
+// infer reg 1 addr
+CALLFUNC 1
+
+----------------------------------------
+
+Js:
+let z = “himom”;
+let  x = /foo/
+x.test(“hello world”); // false
+
+// rdi, rsi set
+//
+
+class RegExpObject()
+{
+   CODE *ptr; // x86
+   test(string subject){ *ptr() }
+}
+
+Class Dict()
+{
+  // int salt;
+  Func *computeHash;
+  init()
+  {
+    Int mySecretSalt = rand();
+    // asmjit stuff
+    a.mov(rcx, mySecretSalt);
+
+    computeHash = a.makeJitPage()
+  }
+}
+
+TOS
+<....>
+BOS
+
+Jmp main
+Dict_code:
+…
+…
+...
+
+Main:
+Mov …, ...
+Call dict_code
+
+
+Loadi 4 0xDEADBEEF
+
+// reg 4 points to jit page now
+
+// leak reg 4 address
+
+// jump to leaked addr
+
+a.jmp(+8)
+a.nop()
+
+..
+Jmp +8
+0xDEADBEEF
+call foo
+foo: a.pop rbx
+sub rbx 8
+….
+
+
+Question: where is the mmap()’d jit code relative to glibc malloc heap
+
+Exploit #1
+
+<jit spray>
+Leak current ip
+Subtract (some constant) from leak
+Jump to jit spray
+<shell>
+
+Exploit #2
+
+// dictionary is a TreeDict or something
+    T
+          I
+
+Allocate a dictionary, d
+Insert address inference target object AS A KEY (string?)
+// binary search…
+Print target addr
+
+Our jit engine library: https://github.com/asmjit/asmjit
+
+------------------------------------------------------------
+important
+------------------------------------------------------------
+fixed storage for "common" integers
+
+reuse string pointers when reassigning
+-> number of characters vs number of bytes
+-> buffer overflow heap
+
+
+forkey -> dont make deep copy
+
+
+
+use empty stack locations
+-> leak existing data if registers
+
+
+mmap
+    -
+
+
+tutorial
+
+
+------------------------------------------------------------
+features
+------------------------------------------------------------
+differentiate types of while / if
+
+add immediate versions to add/mul/div ops
