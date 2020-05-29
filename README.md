@@ -4,8 +4,40 @@
 
 CS 263 Runtime Systems Project
 
+## Requirements
 
-## Log of weekly progress:
+Everything has been tested and is known to work on Ubuntu 18.04 on an x86_64 processor.
+
+```bash
+$ sudo apt-get -y install flex bison make g++
+$ sudo apt-get -y install python3-pip python3-setuptools
+$ sudo -H python3 -m pip install wheel
+$ sudo -H python3 -m pip install pwntools
+```
+
+## Build
+
+```bash
+$ cd badlang
+$ make clean
+$ make
+
+# Run unit-tests on every badlang file in the examples directory
+$ make test
+```
+
+## Execute
+
+```bash
+# Hello World
+$ ./bin/badlang ../examples/hello_world.bad
+
+# Shell Exploit
+$ ./bin/badlang ../exploits/getshell/exploit.bad
+```
+
+## Weekly Progress Log
+
 
 ### Week of April 20th
 
@@ -16,7 +48,6 @@ CS 263 Runtime Systems Project
 * Started language specs
 * Created 2 example exploits (pseudoscope, see BADLANG-drafting.md)
 * More paper reading & discussion
-
 
 ### Week of May 4
 
@@ -38,3 +69,4 @@ CS 263 Runtime Systems Project
 ### Week of May 25
 * Made exploit script reliable by using internal AsmJit allocator instead of custom allocator.
 * Began project writeup.
+* Began project presentation.
